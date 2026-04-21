@@ -108,6 +108,10 @@ def signup_view(request):
     return render(request, 'users/signup.html')
 from django.http import HttpResponse
 
+def logout_view(request):
+    request.session.flush()
+    return redirect('home')
+
 def login_view(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
@@ -131,6 +135,6 @@ def login_view(request):
         request.session['role'] = user.role
         request.session['full_name'] = user.full_name
 
-        return redirect('home')
+        return redirect('home_page')
 
     return render(request, 'users/login.html')
