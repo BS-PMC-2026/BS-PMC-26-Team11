@@ -1,5 +1,8 @@
 
 import re
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 from django.shortcuts import render, redirect
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.validators import validate_email
@@ -108,9 +111,31 @@ def signup_view(request):
     return render(request, 'users/signup.html')
 from django.http import HttpResponse
 
+
+
+
 def logout_view(request):
     request.session.flush()
-    return redirect('home')
+    response = redirect('home')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
+
+
+from django.views.decorators.cache import never_cache
+
+@never_cache
+def home_page(request):
+    if not request.session.get('user_id'):
+        return redirect('home')
+
+    full_name = request.session.get('full_name', 'User')
+    response = render(request, 'home.html', {'full_name': full_name})
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 def login_view(request):
     if request.method == 'POST':
