@@ -1,0 +1,329 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דף הבית</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                linear-gradient(rgba(15, 15, 15, 0.55), rgba(15, 15, 15, 0.7)),
+                url("{% static 'images/red-peppers.jpg' %}") center/cover no-repeat;
+            color: #fff;
+        }
+
+        .page-wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            width: 94%;
+            margin: 20px auto 0;
+            background: rgba(255,255,255,0.94);
+            border-radius: 22px;
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo img {
+            height: 52px;
+            object-fit: contain;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 34px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            color: #333;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .btn-solid {
+            border: none;
+            color: #fff;
+            background: linear-gradient(135deg, #c91212, #ef3a22);
+            border-radius: 14px;
+            padding: 10px 22px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(201, 18, 18, 0.3);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .hero {
+            flex: 1;
+            width: 94%;
+            margin: 22px auto 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .welcome-card {
+            background: rgba(247, 243, 238, 0.97);
+            border-radius: 30px;
+            padding: 42px 38px;
+            box-shadow: 0 16px 35px rgba(0,0,0,0.24);
+            color: #222;
+        }
+
+        .welcome-card h1 {
+            font-size: 54px;
+            font-weight: 900;
+            color: #171717;
+            margin-bottom: 14px;
+        }
+
+        .welcome-card h1 .accent {
+            color: #d92b1f;
+        }
+
+        .welcome-card p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .dashboard-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+            text-align: center;
+            color: #333;
+            transition: 0.3s;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 36px rgba(0,0,0,0.2);
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .dashboard-card h3 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #171717;
+        }
+
+        .dashboard-card p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .card-link {
+            display: inline-block;
+            color: #d92b1f;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .card-link:hover {
+            text-decoration: underline;
+        }
+
+        .stats-grid {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 24px;
+            padding: 28px;
+            backdrop-filter: blur(5px);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 18px;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ff4d2f;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #e8e8e8;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .topbar {
+                flex-direction: column;
+                gap: 14px;
+                padding: 18px;
+            }
+
+            .nav-links {
+                gap: 16px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome-card {
+                padding: 24px 18px;
+            }
+
+            .welcome-card h1 {
+                font-size: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+    <header class="topbar">
+        <div class="logo">
+            <img src="{% static 'images/logo.png' %}" alt="logo">
+        </div>
+
+        <nav class="nav-links">
+            <a href="#">דף הבית</a>
+            <a href="#">המוצרים שלנו</a>
+            <a href="#">אודות</a>
+            <a href="#">צור קשר</a>
+        </nav>
+
+        <div class="nav-actions">
+            <div class="user-info">
+                <span class="user-name">{{ full_name }}</span>
+            </div>
+            <a href="{% url 'logout' %}" class="btn-solid">התנתקות</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="welcome-card">
+            <h1>ברוך הבא, <span class="accent">{{ full_name }}!</span></h1>
+            <p>התחברת בהצלחה לחשבון שלך. כעת תוכל לגלוש בין המוצרים שלנו, לגלות טעמים חדשים ולהנות מחוויה חווה ייחודית.</p>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon">🌶️</div>
+                    <h3>סרוק מוצרים</h3>
+                    <p>סרוק ותגלה מידע על סוגי הפלפלים וטעמים ייחודיים.</p>
+                    <a href="#" class="card-link">ללמוד עוד →</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">🛍️</div>
+                    <h3>קניות</h3>
+                    <p>קנה מוצרים ייחודיים מהחווה שלנו ישירות לביתך.</p>
+                    <a href="#" class="card-link">לחנות →</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">💚</div>
+                    <h3>המועדפות שלי</h3>
+                    <p>חפץ את המוצרים המועדפים עליך וקבל הצעות מיוחדות.</p>
+                    <a href="#" class="card-link">לראות →</a>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-number">12</div>
+                    <div class="stat-label">מוצרים במועדפות</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">הזמנות הושלמו</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">₪249</div>
+                    <div class="stat-label">זמנים ממתינים</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">⭐ 4.8</div>
+                    <div class="stat-label">דירוג שלך</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+</body>
+</html>
