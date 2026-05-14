@@ -1,13 +1,15 @@
 
 import re
-from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
+from datetime import timedelta
+
 from django.views.decorators.cache import never_cache
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from .models import User
+from django.utils import timezone
+from .models import User, Package, CartItem
 
 
 def is_strong_password(password):
@@ -109,7 +111,6 @@ def signup_view(request):
         return redirect('signup_success')
 
     return render(request, 'users/signup.html')
-from django.http import HttpResponse
 
 
 
@@ -123,8 +124,6 @@ def logout_view(request):
     return response
 
 
-from django.views.decorators.cache import never_cache
-
 @never_cache
 def home_page(request):
     if not request.session.get('user_id'):
@@ -136,6 +135,82 @@ def home_page(request):
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
     return response
+
+def _get_logged_in_user(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return None
+    try:
+        return User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return None
+
+
+def package_list(request):
+    user = _get_logged_in_user(request)
+    if not user:
+        return redirect('home')
+
+    packages = Package.objects.filter(is_available=True)
+    success_message = request.GET.get('success')
+    error_message = request.GET.get('error')
+
+    return render(request, 'users/packages.html', {
+        'packages': packages,
+        'full_name': user.full_name,
+        'success_message': success_message,
+        'error_message': error_message,
+    })
+
+
+def package_detail(request, package_id):
+    user = _get_logged_in_user(request)
+    if not user:
+        return redirect('home')
+
+    package = get_object_or_404(Package, id=package_id)
+    return render(request, 'users/package_detail.html', {
+        'package': package,
+        'full_name': user.full_name,
+    })
+
+
+def add_to_cart(request, package_id):
+    user = _get_logged_in_user(request)
+    if not user:
+        return redirect('home')
+
+    package = get_object_or_404(Package, id=package_id)
+    if not package.is_available:
+        return redirect(f"{reverse('packages')}?error=not_available")
+
+    if package.available_capacity() <= 0:
+        return redirect(f"{reverse('packages')}?error=capacity_full")
+
+    CartItem.objects.create(
+        user=user,
+        package=package,
+        package_name=package.name,
+        reserved_until=timezone.now() + timedelta(minutes=15)
+    )
+
+    return redirect(f"{reverse('packages')}?success=reserved")
+
+
+def cart_view(request):
+    user = _get_logged_in_user(request)
+    if not user:
+        return redirect('home')
+
+    cart_items = CartItem.objects.filter(user=user, reserved_until__gt=timezone.now()).select_related('package')
+    expired_items = CartItem.objects.filter(user=user, reserved_until__lte=timezone.now())
+    
+    return render(request, 'users/cart.html', {
+        'cart_items': cart_items,
+        'full_name': user.full_name,
+        'cart_count': cart_items.count(),
+    })
+
 
 def login_view(request):
     if request.method == 'POST':

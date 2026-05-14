@@ -1,0 +1,82 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פרטי חבילה</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { min-height: 100vh; background: linear-gradient(rgba(15, 15, 15, 0.55), rgba(15, 15, 15, 0.7)), url("{% static 'images/red-peppers.jpg' %}") center/cover no-repeat; color: #fff; }
+        .page-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+        .topbar { width: 94%; margin: 20px auto 0; background: rgba(255,255,255,0.94); border-radius: 22px; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 25px rgba(0,0,0,0.18); }
+        .logo img { height: 52px; object-fit: contain; }
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a { text-decoration: none; color: #333; font-weight: bold; font-size: 15px; }
+        .nav-actions { display: flex; gap: 14px; align-items: center; }
+        .user-name { font-weight: bold; color: #333; }
+        .cart-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: linear-gradient(135deg, #c91212, #ef3a22); color: #fff; font-weight: bold; text-decoration: none; }
+        .btn-solid { border: none; color: #fff; background: linear-gradient(135deg, #c91212, #ef3a22); border-radius: 14px; padding: 10px 22px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .content { width: 94%; margin: 24px auto 40px; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; }
+        .detail-card { background: rgba(255,255,255,0.95); border-radius: 24px; overflow: hidden; box-shadow: 0 14px 32px rgba(0,0,0,0.18); color: #222; }
+        .detail-card img { width: 100%; height: 460px; object-fit: cover; }
+        .detail-body { padding: 28px; display: grid; gap: 18px; }
+        .detail-title { font-size: 32px; font-weight: 900; color: #171717; }
+        .detail-meta { display: grid; gap: 12px; font-size: 16px; color: #444; }
+        .detail-meta span { display: block; }
+        .detail-description { line-height: 1.8; font-size: 16px; color: #444; }
+        .reserve-box { background: rgba(247,243,238,0.98); border-radius: 24px; padding: 26px; display: grid; gap: 16px; color: #222; box-shadow: 0 14px 28px rgba(0,0,0,0.15); }
+        .reserve-box h2 { font-size: 26px; margin-bottom: 0; }
+        .reserve-field { display: flex; justify-content: space-between; gap: 10px; font-size: 16px; }
+        .reserve-button { border: none; color: #fff; background: linear-gradient(135deg, #c91212, #ef3a22); border-radius: 14px; padding: 14px 20px; font-weight: bold; cursor: pointer; }
+        @media (max-width: 900px) { .content { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+    <header class="topbar">
+        <div class="logo">
+            <img src="{% static 'images/logo.png' %}" alt="logo">
+        </div>
+        <nav class="nav-links">
+            <a href="{% url 'home_page' %}">דף הבית</a>
+            <a href="{% url 'packages' %}">חבילות חווה</a>
+        </nav>
+        <div class="nav-actions">
+            <span class="user-name">{{ full_name }}</span>
+            <a href="{% url 'cart' %}" class="cart-icon">🛒</a>
+            <a href="{% url 'logout' %}" class="btn-solid">התנתקות</a>
+        </div>
+    </header>
+
+    <div class="content">
+        <div class="detail-card">
+            {% if package.image_url %}
+                <img src="{{ package.image_url }}" alt="{{ package.name }}">
+            {% endif %}
+            <div class="detail-body">
+                <div class="detail-title">{{ package.name }}</div>
+                <div class="detail-meta">
+                    <span>תיאור: {{ package.description }}</span>
+                    <span>סוג חבילה: {{ package.package_type }}</span>
+                    <span>אזור חווה: {{ package.farm_area }}</span>
+                    <span>מחיר: ₪{{ package.price }}</span>
+                    <span>מקומות פנויים: {{ package.available_capacity }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="reserve-box">
+            <h2>הזמן חבילה</h2>
+            <div class="reserve-field"><strong>קיבולת:</strong><span>{{ package.capacity }}</span></div>
+            <div class="reserve-field"><strong>זמינות חבילה:</strong><span>{% if package.is_available %}זמינה{% else %}לא זמינה{% endif %}</span></div>
+            <div class="reserve-field"><strong>חסימה עד:</strong><span>15 דקות</span></div>
+            <form method="post" action="{% url 'add_to_cart' package.id %}">
+                {% csrf_token %}
+                <button type="submit" class="reserve-button">הוסף לעגלה</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
