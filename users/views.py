@@ -13,9 +13,10 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse, HttpResponseNotAllowed
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from .models import User, Package, Order, Discount
+from .models import User, Package, CartItem, Discount
 from .cancellation import assert_cancellation_window_open, cancellation_deadline, is_cancellation_window_open
 from .exceptions import TimeExpired
+from .reservations import release_expired_reservations
 
 
 def is_strong_password(password):
@@ -130,6 +131,43 @@ def logout_view(request):
     return response
 
 
+def package_reservation_admin(request):
+    user = _get_logged_in_user(request)
+    if not _is_admin(user):
+        return redirect('home')
+
+    packages = Package.objects.all().order_by('id')
+    error_message = None
+    success_message = request.GET.get('success')
+
+    if request.method == 'POST':
+        for key, raw in request.POST.items():
+            if not key.startswith('reservation_minutes_'):
+                continue
+            pk = key.replace('reservation_minutes_', '')
+            if not pk.isdigit():
+                continue
+            raw = (raw or '').strip()
+            try:
+                val = int(raw)
+                if val < 1 or val > 10080:
+                    raise ValueError
+            except (ValueError, TypeError):
+                error_message = 'זמן שמירה לא חוקי (1–10080 דקות).'
+                break
+            Package.objects.filter(id=int(pk)).update(reservation_minutes=val)
+        if not error_message:
+            return redirect(f"{reverse('package_reservation_admin')}?success=saved")
+
+    return render(request, 'users/admin_package_reservations.html', {
+        'packages': packages,
+        'full_name': user.full_name,
+        'user_role': user.role,
+        'error_message': error_message,
+        'success_message': success_message,
+    })
+
+
 @never_cache
 def home_page(request):
     if not request.session.get('user_id'):
@@ -146,6 +184,7 @@ def home_page(request):
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
     return response
+
 
 def _get_logged_in_user(request):
     user_id = request.session.get('user_id')
@@ -166,9 +205,11 @@ def package_list(request):
     if not user:
         return redirect('home')
 
+    release_expired_reservations()
     packages = Package.objects.filter(is_available=True)
     success_message = request.GET.get('success')
     error_message = request.GET.get('error')
+    reserved_minutes = request.GET.get('minutes')
 
     return render(request, 'users/packages.html', {
         'packages': packages,
@@ -176,6 +217,7 @@ def package_list(request):
         'user_role': user.role,
         'success_message': success_message,
         'error_message': error_message,
+        'reserved_minutes': reserved_minutes,
     })
 
 
@@ -184,10 +226,12 @@ def package_detail(request, package_id):
     if not user:
         return redirect('home')
 
+    release_expired_reservations()
     package = get_object_or_404(Package, id=package_id)
     return render(request, 'users/package_detail.html', {
         'package': package,
         'full_name': user.full_name,
+        'user_role': user.role,
     })
 
 
@@ -200,17 +244,21 @@ def add_to_cart(request, package_id):
     if not package.is_available:
         return redirect(f"{reverse('packages')}?error=not_available")
 
+    release_expired_reservations()
     if package.available_capacity() <= 0:
         return redirect(f"{reverse('packages')}?error=capacity_full")
 
-    Order.objects.create(
+    now = timezone.now()
+    minutes = int(package.reservation_minutes)
+    CartItem.objects.create(
         user=user,
         package=package,
         package_name=package.name,
-        reserved_until=timezone.now() + timedelta(minutes=15)
+        reserved_at=now,
+        expires_at=now + timedelta(minutes=minutes),
     )
 
-    return redirect(f"{reverse('packages')}?success=reserved")
+    return redirect(f"{reverse('packages')}?success=reserved&minutes={minutes}")
 
 
 def cart_view(request):
@@ -218,14 +266,15 @@ def cart_view(request):
     if not user:
         return redirect('home')
 
+    release_expired_reservations()
     now = timezone.now()
-    reserved_items = Order.objects.filter(user=user, status='Reserved', reserved_until__gt=now).select_related('package')
+    reserved_items = CartItem.objects.filter(user=user, status='Reserved', expires_at__gt=now).select_related('package')
     orders = []
     for item in reserved_items:
         orders.append({
             'item': item,
-            'cancelable': is_cancellation_window_open(item.created_at, now=now),
-            'cancel_until': cancellation_deadline(item.created_at),
+            'cancelable': is_cancellation_window_open(item.reserved_at, now=now),
+            'cancel_until': cancellation_deadline(item.reserved_at),
         })
 
     path = request.path.rstrip('/')
@@ -357,8 +406,8 @@ def cancel_user_package(request, order_id):
         return JsonResponse({'error': 'authentication_required'}, status=403)
 
     try:
-        order = Order.objects.get(id=order_id)
-    except Order.DoesNotExist:
+        order = CartItem.objects.get(id=order_id)
+    except CartItem.DoesNotExist:
         return JsonResponse({'error': 'not_found'}, status=404)
 
     if order.user_id != user.id:
@@ -368,7 +417,7 @@ def cancel_user_package(request, order_id):
         return JsonResponse({'error': 'already_cancelled'}, status=400)
 
     try:
-        assert_cancellation_window_open(order.created_at)
+        assert_cancellation_window_open(order.reserved_at)
     except TimeExpired:
         return JsonResponse({'error': 'TimeExpired'}, status=400)
 

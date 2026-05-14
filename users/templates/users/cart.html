@@ -60,8 +60,8 @@
                         <tr>
                             <th>שם החבילה</th>
                             <th>מחיר</th>
-                            <th>נוצר ב- (Created_At)</th>
-                            <th>שמור עד</th>
+                            <th>התחלת שמירה (ReservedAt)</th>
+                            <th>תפוגת שמירה (ExpiresAt)</th>
                             <th>פעולה</th>
                         </tr>
                     </thead>
@@ -70,9 +70,10 @@
                             <tr id="cart-item-{{ item_data.item.id }}">
                                 <td>{{ item_data.item.package_name }}</td>
                                 <td>₪{{ item_data.item.package.price }}</td>
-                                <td>{{ item_data.item.created_at|date:"d/m H:i" }}</td>
-                                <td>{{ item_data.item.reserved_until|date:"d/m H:i" }}</td>
+                                <td>{{ item_data.item.reserved_at|date:"d/m H:i" }}</td>
+                                <td>{{ item_data.item.expires_at|date:"d/m H:i" }}</td>
                                 <td>
+                                    <div style="font-size: 12px; color: #444; margin-bottom: 8px;">שמירה בעגלה: {{ item_data.item.package.reservation_minutes }} דקות מההוספה; אם לא תושלם הרכישה בזמן — השמירה תשוחרר אוטומטית.</div>
                                     {% if item_data.cancelable %}
                                         <button class="btn-secondary cancel-button" data-item-id="{{ item_data.item.id }}">ביטול הזמנה</button>
                                     {% else %}

@@ -42,6 +42,10 @@
             <a href="{% url 'home_page' %}">דף הבית</a>
             <a href="{% url 'packages' %}">חבילות חווה</a>
             <a href="{% url 'my_orders' %}">ההזמנות שלי</a>
+            {% if user_role == 'admin' %}
+                <a href="{% url 'promotions' %}" style="color: #c91212; font-weight: 900;">הגדרת מבצעים</a>
+                <a href="{% url 'package_reservation_admin' %}" style="color: #c91212; font-weight: 900;">זמן שמירה בעגלה</a>
+            {% endif %}
         </nav>
         <div class="nav-actions">
             <span class="user-name">{{ full_name }}</span>
@@ -71,6 +75,7 @@
                         {% endif %}
                     </span>
                     <span>מקומות פנויים: {{ package.available_capacity }}</span>
+                    <span style="display:block; font-size: 14px; color: #1a6cad; font-weight: 700; margin-top: 8px;">שמירה בעגלה: החבילה תישמר {{ package.reservation_minutes }} דקות מרגע ההוספה לעגלה (לפי הגדרת המנהל).</span>
                 </div>
             </div>
         </div>
@@ -79,7 +84,7 @@
             <h2>הזמן חבילה</h2>
             <div class="reserve-field"><strong>קיבולת:</strong><span>{{ package.capacity }}</span></div>
             <div class="reserve-field"><strong>זמינות חבילה:</strong><span>{% if package.is_available %}זמינה{% else %}לא זמינה{% endif %}</span></div>
-            <div class="reserve-field"><strong>חסימה עד:</strong><span>15 דקות</span></div>
+            <div class="reserve-field"><strong>זמן שמירה בעגלה:</strong><span>{{ package.reservation_minutes }} דקות</span></div>
             <form method="post" action="{% url 'add_to_cart' package.id %}">
                 {% csrf_token %}
                 <button type="submit" class="reserve-button">הוסף לעגלה</button>

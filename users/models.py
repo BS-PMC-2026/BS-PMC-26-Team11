@@ -27,13 +27,18 @@ class Package(models.Model):
     image_url = models.URLField(blank=True)
     capacity = models.PositiveIntegerField(default=0)
     is_available = models.BooleanField(default=True)
+    reservation_minutes = models.PositiveIntegerField(
+        default=15,
+        db_column='ReservationMinutes',
+        help_text='Minutes a user may hold this package in the cart without completing purchase.',
+    )
 
     def __str__(self):
         return self.name
 
     def active_reservations(self):
         now = timezone.now()
-        return self.orders.filter(status='Reserved', reserved_until__gt=now).count()
+        return self.cart_items.filter(status='Reserved', expires_at__gt=now).count()
 
     def available_capacity(self):
         return max(self.capacity - self.active_reservations(), 0)
@@ -104,26 +109,42 @@ class Discount(models.Model):
         return self.start_date <= today <= self.end_date
 
 
-class Order(models.Model):
-    """User reservation / order row; stored in DB table ``Orders`` (Created_At column)."""
+class CartItem(models.Model):
+    """Cart / reservation row in ``CartItems`` (UserId, PackageId, ReservedAt, ExpiresAt, Status)."""
 
     class Meta:
-        db_table = 'Orders'
+        db_table = 'CartItems'
 
     STATUS_CHOICES = [
         ('Reserved', 'Reserved'),
         ('Cancelled', 'Cancelled'),
+        ('Expired', 'Expired'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
-    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='orders')
-    package_name = models.CharField(max_length=120, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Reserved')
-    reserved_until = models.DateTimeField()
-    created_at = models.DateTimeField(auto_now_add=True, db_column='Created_At')
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='cart_items',
+        db_column='UserId',
+    )
+    package = models.ForeignKey(
+        Package,
+        on_delete=models.CASCADE,
+        related_name='cart_items',
+        db_column='PackageId',
+    )
+    package_name = models.CharField(max_length=120, blank=True, db_column='PackageName')
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='Reserved',
+        db_column='Status',
+    )
+    reserved_at = models.DateTimeField(db_column='ReservedAt')
+    expires_at = models.DateTimeField(db_column='ExpiresAt')
 
     def __str__(self):
         return f"{self.user.full_name} - {self.package.name}"
 
     def is_active(self):
-        return self.status == 'Reserved' and self.reserved_until > timezone.now()
+        return self.status == 'Reserved' and self.expires_at > timezone.now()

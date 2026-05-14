@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 
-from users.models import User, Package, Order
+from users.models import User, Package, CartItem
 
 
 class PackageBookingTests(TestCase):
@@ -24,7 +24,8 @@ class PackageBookingTests(TestCase):
             package_type='ביקור משפחות',
             farm_area='החווה הירוקה',
             capacity=1,
-            is_available=True
+            is_available=True,
+            reservation_minutes=15,
         )
 
     def _login_session(self):
@@ -36,7 +37,7 @@ class PackageBookingTests(TestCase):
     def test_add_to_cart_requires_authentication(self):
         response = self.client.post(reverse('add_to_cart', args=[self.package.id]))
         self.assertRedirects(response, reverse('home'))
-        self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(CartItem.objects.count(), 0)
 
     def test_add_to_cart_checks_package_availability(self):
         self.package.is_available = False
@@ -46,44 +47,64 @@ class PackageBookingTests(TestCase):
         response = self.client.post(reverse('add_to_cart', args=[self.package.id]))
 
         self.assertRedirects(response, reverse('packages') + '?error=not_available')
-        self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(CartItem.objects.count(), 0)
 
     def test_add_to_cart_checks_available_capacity(self):
         self._login_session()
-        Order.objects.create(
+        now = timezone.now()
+        CartItem.objects.create(
             user=self.user,
             package=self.package,
-            reserved_until=timezone.now() + timedelta(minutes=20)
+            package_name=self.package.name,
+            reserved_at=now,
+            expires_at=now + timedelta(minutes=20),
         )
 
         response = self.client.post(reverse('add_to_cart', args=[self.package.id]))
 
         self.assertRedirects(response, reverse('packages') + '?error=capacity_full')
-        self.assertEqual(Order.objects.count(), 1)
+        self.assertEqual(CartItem.objects.count(), 1)
 
     def test_add_to_cart_allows_when_previous_reservation_expired(self):
         self._login_session()
-        Order.objects.create(
+        now = timezone.now()
+        CartItem.objects.create(
             user=self.user,
             package=self.package,
-            reserved_until=timezone.now() - timedelta(minutes=5)
+            package_name=self.package.name,
+            reserved_at=now - timedelta(hours=1),
+            expires_at=now - timedelta(minutes=30),
+            status='Reserved',
         )
 
         response = self.client.post(reverse('add_to_cart', args=[self.package.id]))
 
-        self.assertRedirects(response, reverse('packages') + '?success=reserved')
-        self.assertEqual(Order.objects.count(), 2)
-        active_items = Order.objects.filter(package=self.package, reserved_until__gt=timezone.now())
+        self.assertRedirects(response, reverse('packages') + '?success=reserved&minutes=15')
+        self.assertEqual(CartItem.objects.count(), 2)
+        active_items = CartItem.objects.filter(package=self.package, expires_at__gt=timezone.now(), status='Reserved')
         self.assertEqual(active_items.count(), 1)
-        self.assertTrue(active_items.first().reserved_until > timezone.now())
+
+    def test_add_to_cart_sets_expires_from_reservation_minutes(self):
+        self._login_session()
+        self.package.reservation_minutes = 45
+        self.package.save()
+        before = timezone.now()
+        response = self.client.post(reverse('add_to_cart', args=[self.package.id]))
+        self.assertRedirects(response, reverse('packages') + '?success=reserved&minutes=45')
+        row = CartItem.objects.get(package=self.package, status='Reserved')
+        self.assertEqual((row.expires_at - row.reserved_at).total_seconds(), 45 * 60)
+        self.assertGreaterEqual(row.reserved_at, before)
+        self.assertLessEqual(row.reserved_at, timezone.now())
 
     def test_cancel_order_within_allowed_window(self):
         self._login_session()
-        order = Order.objects.create(
+        now = timezone.now()
+        order = CartItem.objects.create(
             user=self.user,
             package=self.package,
             package_name=self.package.name,
-            reserved_until=timezone.now() + timedelta(minutes=10),
+            reserved_at=now,
+            expires_at=now + timedelta(minutes=10),
         )
 
         response = self.client.delete(reverse('cancel_user_package', args=[order.id]))
@@ -93,14 +114,14 @@ class PackageBookingTests(TestCase):
 
     def test_cancel_order_after_allowed_window_returns_400_time_expired(self):
         self._login_session()
-        order = Order.objects.create(
+        now = timezone.now()
+        order = CartItem.objects.create(
             user=self.user,
             package=self.package,
             package_name=self.package.name,
-            reserved_until=timezone.now() + timedelta(minutes=10),
+            reserved_at=now - timedelta(minutes=16),
+            expires_at=now + timedelta(minutes=10),
         )
-        Order.objects.filter(id=order.id).update(created_at=timezone.now() - timedelta(minutes=16))
-        order.refresh_from_db()
 
         response = self.client.delete(reverse('cancel_user_package', args=[order.id]))
         self.assertEqual(response.status_code, 400)
@@ -110,14 +131,14 @@ class PackageBookingTests(TestCase):
 
     def test_cancel_order_one_month_old_returns_400_no_db_change(self):
         self._login_session()
-        order = Order.objects.create(
+        now = timezone.now()
+        order = CartItem.objects.create(
             user=self.user,
             package=self.package,
             package_name=self.package.name,
-            reserved_until=timezone.now() + timedelta(minutes=10),
+            reserved_at=now - timedelta(days=35),
+            expires_at=now + timedelta(minutes=10),
         )
-        Order.objects.filter(id=order.id).update(created_at=timezone.now() - timedelta(days=35))
-        order.refresh_from_db()
 
         response = self.client.delete(reverse('cancel_user_package', args=[order.id]))
         self.assertEqual(response.status_code, 400)
@@ -133,11 +154,13 @@ class PackageBookingTests(TestCase):
             password=make_password('StrongPass1!'),
             role='user'
         )
-        order = Order.objects.create(
+        now = timezone.now()
+        order = CartItem.objects.create(
             user=other_user,
             package=self.package,
             package_name=self.package.name,
-            reserved_until=timezone.now() + timedelta(minutes=10),
+            reserved_at=now,
+            expires_at=now + timedelta(minutes=10),
         )
         self._login_session()
 
@@ -146,3 +169,40 @@ class PackageBookingTests(TestCase):
         self.assertEqual(response.json().get('error'), 'forbidden')
         order.refresh_from_db()
         self.assertEqual(order.status, 'Reserved')
+
+    def test_expired_reservation_marked_expired_releases_capacity_logic(self):
+        now = timezone.now()
+        row = CartItem.objects.create(
+            user=self.user,
+            package=self.package,
+            package_name=self.package.name,
+            reserved_at=now - timedelta(hours=2),
+            expires_at=now - timedelta(minutes=1),
+            status='Reserved',
+        )
+        self.assertEqual(self.package.available_capacity(), 1)
+        from users.reservations import release_expired_reservations
+        release_expired_reservations()
+        row.refresh_from_db()
+        self.assertEqual(row.status, 'Expired')
+
+    def test_admin_can_save_package_reservation_minutes(self):
+        admin = User.objects.create(
+            full_name='Admin',
+            email='adminres@example.com',
+            phone='0501111112',
+            password=make_password('StrongPass1!'),
+            role='admin',
+        )
+        session = self.client.session
+        session['user_id'] = admin.id
+        session['full_name'] = admin.full_name
+        session.save()
+
+        response = self.client.post(
+            reverse('package_reservation_admin'),
+            {f'reservation_minutes_{self.package.id}': '42'},
+        )
+        self.assertRedirects(response, reverse('package_reservation_admin') + '?success=saved')
+        self.package.refresh_from_db()
+        self.assertEqual(self.package.reservation_minutes, 42)

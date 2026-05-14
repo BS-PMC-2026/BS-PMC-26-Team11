@@ -58,6 +58,7 @@
             <a href="{% url 'my_orders' %}">ההזמנות שלי</a>
             {% if user_role == 'admin' %}
                 <a href="{% url 'promotions' %}" style="color: #c91212; font-weight: 900;">הגדרת מבצעים</a>
+                <a href="{% url 'package_reservation_admin' %}" style="color: #c91212; font-weight: 900;">זמן שמירה בעגלה</a>
             {% endif %}
         </nav>
         <div class="nav-actions">
@@ -70,8 +71,8 @@
     <h1 class="page-title">חבילות ביקור בחווה</h1>
 
     <div class="content">
-        {% if success_message %}
-            <div class="message success">החבילה הועלתה לעגלה בהצלחה. ההזמנה שמורה לתקופה מוגבלת.</div>
+        {% if success_message == 'reserved' %}
+            <div class="message success">החבילה נוספה לעגלה. השמירה בתוקף ל־{% if reserved_minutes %}{{ reserved_minutes }}{% else %}המוגדר{% endif %} דקות מרגע ההוספה (לפי הגדרת המנהל). אנא השלם את ההזמנה בזמן.</div>
         {% endif %}
         {% if error_message %}
             <div class="message error">
@@ -111,6 +112,9 @@
                                 <span>מחיר: ₪{{ package.price }}</span>
                             {% endif %}
                             <span>מקומות פנויים: {{ package.available_capacity }}</span>
+                        </div>
+                        <div class="package-meta">
+                            <span style="grid-column: 1 / -1; font-size: 13px; color: #1a6cad; font-weight: 700;">שמירה בעגלה: החבילה תישמר עבורך {{ package.reservation_minutes }} דקות מרגע ההוספה לעגלה (לפי הגדרת המנהל).</span>
                         </div>
                         <div class="package-footer">
                             <a href="{% url 'package_detail' package.id %}" class="view-btn">פרטים</a>

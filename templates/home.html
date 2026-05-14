@@ -279,6 +279,7 @@
             <a href="{% url 'my_orders' %}">ההזמנות שלי</a>
             {% if user_role == 'admin' %}
                 <a href="{% url 'promotions' %}" style="color: #c91212; font-weight: 900;">הגדרת מבצעים</a>
+                <a href="{% url 'package_reservation_admin' %}" style="color: #c91212; font-weight: 900;">זמן שמירה בעגלה</a>
             {% endif %}
             <a href="#">אודות</a>
             <a href="#">צור קשר</a>
