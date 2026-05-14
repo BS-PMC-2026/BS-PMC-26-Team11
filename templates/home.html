@@ -276,6 +276,10 @@
         <nav class="nav-links">
             <a href="#">דף הבית</a>
             <a href="{% url 'packages' %}">חבילות חווה</a>
+            <a href="{% url 'my_orders' %}">ההזמנות שלי</a>
+            {% if user_role == 'admin' %}
+                <a href="{% url 'promotions' %}" style="color: #c91212; font-weight: 900;">הגדרת מבצעים</a>
+            {% endif %}
             <a href="#">אודות</a>
             <a href="#">צור קשר</a>
         </nav>
@@ -284,7 +288,7 @@
             <div class="user-info">
                 <span class="user-name">{{ full_name }}</span>
             </div>
-            <a href="{% url 'cart' %}" class="cart-icon">🛒</a>
+            <a href="{% url 'my_orders' %}" class="cart-icon">🛒</a>
             <a href="{% url 'logout' %}" class="btn-solid">התנתקות</a>
         </div>
     </header>

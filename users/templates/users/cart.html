@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>עגלה שלי</title>
+    <title>{{ page_heading }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { min-height: 100vh; background: linear-gradient(rgba(15, 15, 15, 0.55), rgba(15, 15, 15, 0.7)), url("{% static 'images/red-peppers.jpg' %}") center/cover no-repeat; color: #fff; }
@@ -41,31 +41,32 @@
         <nav class="nav-links">
             <a href="{% url 'home_page' %}">דף הבית</a>
             <a href="{% url 'packages' %}">חבילות חווה</a>
+            <a href="{% url 'my_orders' %}">ההזמנות שלי</a>
         </nav>
         <div class="nav-actions">
             <span class="user-name">{{ full_name }}</span>
-            <a href="{% url 'cart' %}" class="cart-icon">🛒</a>
+            <a href="{% url 'my_orders' %}" class="cart-icon">🛒</a>
             <a href="{% url 'logout' %}" class="btn-solid">התנתקות</a>
         </div>
     </header>
 
-    <h1 class="page-title">עגלתי</h1>
+    <h1 class="page-title">{{ page_heading }}</h1>
 
     <div class="content">
         <div class="cart-container">
-            {% if cart_items %}
+            {% if orders %}
                 <table class="cart-table">
                     <thead>
                         <tr>
                             <th>שם החבילה</th>
                             <th>מחיר</th>
-                            <th>שנוסף ב</th>
+                            <th>נוצר ב- (Created_At)</th>
                             <th>שמור עד</th>
                             <th>פעולה</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item_data in cart_items %}
+                        {% for item_data in orders %}
                             <tr id="cart-item-{{ item_data.item.id }}">
                                 <td>{{ item_data.item.package_name }}</td>
                                 <td>₪{{ item_data.item.package.price }}</td>
@@ -109,7 +110,7 @@
                             const message = document.getElementById('cancel-message');
                             message.textContent = '';
 
-                            const response = await fetch('{% url "cancel_user_package" package_id=0 %}'.replace('/0/', '/' + itemId + '/'), {
+                            const response = await fetch('{% url "cancel_user_package" order_id=0 %}'.replace('/0/', '/' + itemId + '/'), {
                                 method: 'DELETE',
                                 headers: {
                                     'X-CSRFToken': getCookie('csrftoken'),
@@ -129,8 +130,13 @@
                 </script>
             {% else %}
                 <div class="cart-empty">
-                    <p style="font-size: 18px; margin-bottom: 14px;">העגלה שלך ריקה</p>
-                    <p style="color: #999;">עדיין לא הוספת חבילות לעגלה.</p>
+                    {% if page_heading == 'ההזמנות שלי' %}
+                        <p style="font-size: 18px; margin-bottom: 14px;">אין הזמנות פעילות</p>
+                        <p style="color: #999;">לא נמצאו הזמנות בתוקף. הוסף חבילה מהרשימה.</p>
+                    {% else %}
+                        <p style="font-size: 18px; margin-bottom: 14px;">העגלה שלך ריקה</p>
+                        <p style="color: #999;">עדיין לא הוספת חבילות לעגלה.</p>
+                    {% endif %}
                     <a href="{% url 'packages' %}" class="btn-solid" style="margin-top: 20px; display: inline-block;">לחיפוש חבילות</a>
                 </div>
             {% endif %}

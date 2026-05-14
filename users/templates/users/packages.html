@@ -31,11 +31,17 @@
         .package-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; color: #555; }
         .package-meta span { display: block; }
         .package-description { font-size: 15px; line-height: 1.6; color: #444; min-height: 80px; }
-        .package-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .price-section { display: flex; align-items: center; gap: 10px; }
+        .price-original { text-decoration: line-through; color: #999; font-size: 14px; }
+        .price-discounted { font-size: 20px; font-weight: 900; color: #2a9825; }
+        .price-badge { background: #2a9825; color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+        .package-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
         .package-footer .price { font-size: 18px; font-weight: 700; color: #d92b1f; }
         .package-footer a, .package-footer button { text-decoration: none; border: none; cursor: pointer; padding: 10px 18px; border-radius: 14px; font-weight: bold; }
         .view-btn { background: #f4f4f4; color: #333; }
         .reserve-btn { background: linear-gradient(135deg, #c91212, #ef3a22); color: #fff; }
+        .promotion-btn { background: #ffc107; color: #333; font-size: 12px; padding: 8px 12px; }
+        .buttons-row { display: flex; gap: 8px; width: 100%; flex-wrap: wrap; }
         @media (max-width: 1100px) { .packages-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 760px) { .topbar, .page-title, .content { width: 96%; } .packages-grid { grid-template-columns: 1fr; } }
     </style>
@@ -49,10 +55,14 @@
         <nav class="nav-links">
             <a href="{% url 'home_page' %}">דף הבית</a>
             <a href="{% url 'packages' %}">חבילות חווה</a>
+            <a href="{% url 'my_orders' %}">ההזמנות שלי</a>
+            {% if user_role == 'admin' %}
+                <a href="{% url 'promotions' %}" style="color: #c91212; font-weight: 900;">הגדרת מבצעים</a>
+            {% endif %}
         </nav>
         <div class="nav-actions">
             <span class="user-name">{{ full_name }}</span>
-            <a href="{% url 'cart' %}" class="cart-icon">🛒</a>
+            <a href="{% url 'my_orders' %}" class="cart-icon">🛒</a>
             <a href="{% url 'logout' %}" class="btn-solid">התנתקות</a>
         </div>
     </header>
@@ -89,7 +99,17 @@
                         </div>
                         <div class="package-description">{{ package.description }}</div>
                         <div class="package-meta">
-                            <span>מחיר: ₪{{ package.price }}</span>
+                            {% if package.has_active_discount %}
+                                <span>
+                                    <div class="price-section">
+                                        <span class="price-original">₪{{ package.price }}</span>
+                                        <span class="price-discounted">₪{{ package.get_discounted_price }}</span>
+                                        <span class="price-badge">מבצע</span>
+                                    </div>
+                                </span>
+                            {% else %}
+                                <span>מחיר: ₪{{ package.price }}</span>
+                            {% endif %}
                             <span>מקומות פנויים: {{ package.available_capacity }}</span>
                         </div>
                         <div class="package-footer">
@@ -98,6 +118,9 @@
                                 {% csrf_token %}
                                 <button type="submit" class="reserve-btn">הוסף לעגלה</button>
                             </form>
+                            {% if user_role == 'admin' %}
+                                <a href="{% url 'promotions' %}?package_id={{ package.id }}" class="promotion-btn">הגדרת מבצע</a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

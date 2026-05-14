@@ -41,10 +41,11 @@
         <nav class="nav-links">
             <a href="{% url 'home_page' %}">דף הבית</a>
             <a href="{% url 'packages' %}">חבילות חווה</a>
+            <a href="{% url 'my_orders' %}">ההזמנות שלי</a>
         </nav>
         <div class="nav-actions">
             <span class="user-name">{{ full_name }}</span>
-            <a href="{% url 'cart' %}" class="cart-icon">🛒</a>
+            <a href="{% url 'my_orders' %}" class="cart-icon">🛒</a>
             <a href="{% url 'logout' %}" class="btn-solid">התנתקות</a>
         </div>
     </header>
@@ -60,7 +61,15 @@
                     <span>תיאור: {{ package.description }}</span>
                     <span>סוג חבילה: {{ package.package_type }}</span>
                     <span>אזור חווה: {{ package.farm_area }}</span>
-                    <span>מחיר: ₪{{ package.price }}</span>
+                    <span>מחיר:
+                        {% if package.has_active_discount %}
+                            <span style="text-decoration: line-through; color: #999;">₪{{ package.price }}</span>
+                            <strong style="color: #2a9825;">₪{{ package.get_discounted_price }}</strong>
+                            <span style="background: #2a9825; color: #fff; padding: 2px 6px; border-radius: 6px; font-size: 12px;">מבצע</span>
+                        {% else %}
+                            ₪{{ package.price }}
+                        {% endif %}
+                    </span>
                     <span>מקומות פנויים: {{ package.available_capacity }}</span>
                 </div>
             </div>
