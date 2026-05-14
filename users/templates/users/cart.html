@@ -61,15 +61,23 @@
                             <th>מחיר</th>
                             <th>שנוסף ב</th>
                             <th>שמור עד</th>
+                            <th>פעולה</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item in cart_items %}
-                            <tr>
-                                <td>{{ item.package_name }}</td>
-                                <td>₪{{ item.package.price }}</td>
-                                <td>{{ item.created_at|date:"d/m H:i" }}</td>
-                                <td>{{ item.reserved_until|date:"d/m H:i" }}</td>
+                        {% for item_data in cart_items %}
+                            <tr id="cart-item-{{ item_data.item.id }}">
+                                <td>{{ item_data.item.package_name }}</td>
+                                <td>₪{{ item_data.item.package.price }}</td>
+                                <td>{{ item_data.item.created_at|date:"d/m H:i" }}</td>
+                                <td>{{ item_data.item.reserved_until|date:"d/m H:i" }}</td>
+                                <td>
+                                    {% if item_data.cancelable %}
+                                        <button class="btn-secondary cancel-button" data-item-id="{{ item_data.item.id }}">ביטול הזמנה</button>
+                                    {% else %}
+                                        <span style="color: #999;">חלון הביטול עבר</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -78,6 +86,47 @@
                     <a href="{% url 'packages' %}" class="btn-secondary">המשך קניות</a>
                     <button class="btn-reserve">סיים הזמנה</button>
                 </div>
+                <div id="cancel-message" style="margin-top: 16px; color: #d92b1f; font-weight: bold;"></div>
+                <script>
+                    function getCookie(name) {
+                        let cookieValue = null;
+                        if (document.cookie && document.cookie !== '') {
+                            const cookies = document.cookie.split(';');
+                            for (let i = 0; i < cookies.length; i++) {
+                                const cookie = cookies[i].trim();
+                                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                    break;
+                                }
+                            }
+                        }
+                        return cookieValue;
+                    }
+
+                    document.querySelectorAll('.cancel-button').forEach(button => {
+                        button.addEventListener('click', async () => {
+                            const itemId = button.dataset.itemId;
+                            const message = document.getElementById('cancel-message');
+                            message.textContent = '';
+
+                            const response = await fetch('{% url "cancel_user_package" package_id=0 %}'.replace('/0/', '/' + itemId + '/'), {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': getCookie('csrftoken'),
+                                    'Accept': 'application/json',
+                                },
+                            });
+
+                            if (response.ok) {
+                                document.getElementById('cart-item-' + itemId).remove();
+                                message.textContent = 'ההזמנה בוטלה בהצלחה.';
+                            } else {
+                                const data = await response.json();
+                                message.textContent = data.error || 'שגיאה בביטול ההזמנה.';
+                            }
+                        });
+                    });
+                </script>
             {% else %}
                 <div class="cart-empty">
                     <p style="font-size: 18px; margin-bottom: 14px;">העגלה שלך ריקה</p>

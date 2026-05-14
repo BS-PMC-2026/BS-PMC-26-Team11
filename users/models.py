@@ -33,16 +33,22 @@ class Package(models.Model):
 
     def active_reservations(self):
         now = timezone.now()
-        return self.cart_items.filter(reserved_until__gt=now).count()
+        return self.cart_items.filter(status='Reserved', reserved_until__gt=now).count()
 
     def available_capacity(self):
         return max(self.capacity - self.active_reservations(), 0)
 
 
 class CartItem(models.Model):
+    STATUS_CHOICES = [
+        ('Reserved', 'Reserved'),
+        ('Cancelled', 'Cancelled'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='cart_items')
     package_name = models.CharField(max_length=120, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Reserved')
     reserved_until = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -50,4 +56,4 @@ class CartItem(models.Model):
         return f"{self.user.full_name} - {self.package.name}"
 
     def is_active(self):
-        return self.reserved_until > timezone.now()
+        return self.status == 'Reserved' and self.reserved_until > timezone.now()

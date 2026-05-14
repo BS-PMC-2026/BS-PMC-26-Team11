@@ -3,11 +3,13 @@ import re
 from datetime import timedelta
 
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from django.http import JsonResponse, HttpResponseNotAllowed
 from django.utils import timezone
 from .models import User, Package, CartItem
 
@@ -202,14 +204,44 @@ def cart_view(request):
     if not user:
         return redirect('home')
 
-    cart_items = CartItem.objects.filter(user=user, reserved_until__gt=timezone.now()).select_related('package')
-    expired_items = CartItem.objects.filter(user=user, reserved_until__lte=timezone.now())
-    
+    now = timezone.now()
+    reserved_items = CartItem.objects.filter(user=user, status='Reserved', reserved_until__gt=now).select_related('package')
+    cart_items = []
+    for item in reserved_items:
+        cancel_until = item.created_at + timedelta(minutes=15)
+        cart_items.append({
+            'item': item,
+            'cancelable': now <= cancel_until,
+            'cancel_until': cancel_until,
+        })
+
     return render(request, 'users/cart.html', {
         'cart_items': cart_items,
         'full_name': user.full_name,
-        'cart_count': cart_items.count(),
+        'cart_count': len(cart_items),
     })
+
+
+@csrf_exempt
+def cancel_user_package(request, package_id):
+    if request.method != 'DELETE':
+        return HttpResponseNotAllowed(['DELETE'])
+
+    user = _get_logged_in_user(request)
+    if not user:
+        return JsonResponse({'error': 'authentication_required'}, status=403)
+
+    cart_item = get_object_or_404(CartItem, id=package_id, user=user)
+    if cart_item.status != 'Reserved':
+        return JsonResponse({'error': 'already_cancelled'}, status=400)
+
+    cancel_deadline = cart_item.created_at + timedelta(minutes=15)
+    if timezone.now() > cancel_deadline:
+        return JsonResponse({'error': 'expired_cancellation'}, status=400)
+
+    cart_item.status = 'Cancelled'
+    cart_item.save()
+    return JsonResponse({'status': 'cancelled', 'id': cart_item.id})
 
 
 def login_view(request):
