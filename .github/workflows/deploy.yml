@@ -45,7 +45,7 @@ jobs:
 
       - name: Run tests
         run: |
-          python manage.py test users
+          python manage.py test --keepdb
 
 
 
