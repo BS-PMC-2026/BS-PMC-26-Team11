@@ -46,9 +46,17 @@ jobs:
         run: |
           python manage.py test users
 
+
+
+          
       - name: Zip app
+        shell: pwsh
         run: |
-          powershell Compress-Archive -Path * -DestinationPath app.zip -Force
+            if (Test-Path app.zip) { Remove-Item app.zip }
+            Get-ChildItem -Path . -Exclude ".git","venv","__pycache__","db.sqlite3",".env","app.zip" |
+            Compress-Archive -DestinationPath app.zip -Force
+
+
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
