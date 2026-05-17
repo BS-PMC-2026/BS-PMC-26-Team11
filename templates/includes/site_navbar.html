@@ -137,7 +137,57 @@
         }
     }
 </style>
+<style>
+    .site-navbar__links a,
+    .site-navbar__login,
+    .site-navbar__logout,
+    .site-navbar__cart {
+        position: relative;
+        padding: 8px 14px;
+        border-radius: 999px;
+        text-decoration: none;
+        transition: all 0.25s ease;
+        cursor: pointer;
+    }
 
+    .site-navbar__links a:hover,
+    .site-navbar__login:hover,
+    .site-navbar__logout:hover,
+    .site-navbar__cart:hover {
+        background-color: #ffe6ea;
+        color: #d71920;
+        transform: translateY(-2px);
+    }
+
+    .site-navbar__links a::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: 2px;
+        width: 0;
+        height: 2px;
+        background-color: #d71920;
+        transform: translateX(-50%);
+        transition: width 0.25s ease;
+    }
+
+    .site-navbar__links a:hover::after {
+        width: 60%;
+    }
+
+    .site-navbar__links a.is-active {
+        color: #d71920;
+        font-weight: bold;
+    }
+
+    .site-navbar__links a:focus-visible,
+    .site-navbar__login:focus-visible,
+    .site-navbar__logout:focus-visible,
+    .site-navbar__cart:focus-visible {
+        outline: 2px solid #d71920;
+        outline-offset: 3px;
+    }
+</style>
 <header class="site-navbar">
     <div class="site-navbar__inner">
         <a href="{% url 'home' %}" class="site-navbar__brand" aria-label="דף הבית">
