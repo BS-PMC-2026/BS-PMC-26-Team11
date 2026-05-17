@@ -1,0 +1,137 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הרשמה בוצעה בהצלחה</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                linear-gradient(rgba(15, 15, 15, 0.55), rgba(15, 15, 15, 0.7)),
+                url("{% static 'images/red-peppers.jpg' %}") center/cover no-repeat;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .success-container {
+            background: rgba(247, 243, 238, 0.97);
+            border-radius: 30px;
+            padding: 42px 38px;
+            box-shadow: 0 16px 35px rgba(0,0,0,0.24);
+            color: #222;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .success-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            animation: scaleIn 0.6s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .success-title {
+            font-size: 48px;
+            font-weight: 900;
+            color: #171717;
+            margin-bottom: 14px;
+        }
+
+        .success-title .accent {
+            color: #28a745;
+        }
+
+        .success-message {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+
+        .success-details {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 28px;
+            color: #333;
+        }
+
+        .success-details p {
+            font-size: 14px;
+            margin: 8px 0;
+        }
+
+        .btn-solid {
+            border: none;
+            color: #fff;
+            background: linear-gradient(135deg, #c91212, #ef3a22);
+            border-radius: 14px;
+            padding: 14px 32px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(201, 18, 18, 0.3);
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            transition: 0.25s;
+        }
+
+        .btn-solid:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(201, 18, 18, 0.4);
+        }
+
+        @media (max-width: 700px) {
+            .success-container {
+                padding: 24px 18px;
+            }
+
+            .success-title {
+                font-size: 36px;
+            }
+
+            .success-message {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="success-container">
+    <div class="success-icon">✅</div>
+    <h1 class="success-title">הרשמה <span class="accent">בוצעה!</span></h1>
+    <p class="success-message">
+        ברוכים הבאים! חשבונך נוצר בהצלחה. כעת תוכל להתחבר ולהתחיל ליהנות מחוויה החווה שלנו.
+    </p>
+
+    <div class="success-details">
+        <p><strong>✓</strong> חשבון חדש נוצר</p>
+        <p><strong>✓</strong> אתה מוכן להתחבר</p>
+        <p><strong>✓</strong> גישה מלאה למוצרים</p>
+    </div>
+
+    <a href="{% url 'home' %}" class="btn-solid">לך לדף הבית</a>
+</div>
+</body>
+</html>

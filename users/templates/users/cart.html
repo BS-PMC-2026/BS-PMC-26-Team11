@@ -1,0 +1,148 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_heading }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { min-height: 100vh; background: linear-gradient(rgba(15, 15, 15, 0.55), rgba(15, 15, 15, 0.7)), url("{% static 'images/red-peppers.jpg' %}") center/cover no-repeat; color: #fff; }
+        .page-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+        .topbar { width: 94%; margin: 20px auto 0; background: rgba(255,255,255,0.94); border-radius: 22px; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 25px rgba(0,0,0,0.18); }
+        .logo { display: flex; align-items: center; gap: 14px; }
+        .logo img { height: 52px; object-fit: contain; }
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a { text-decoration: none; color: #333; font-weight: bold; font-size: 15px; }
+        .nav-actions { display: flex; gap: 14px; align-items: center; }
+        .user-name { font-weight: bold; color: #333; }
+        .cart-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: linear-gradient(135deg, #c91212, #ef3a22); color: #fff; font-weight: bold; text-decoration: none; }
+        .btn-solid { border: none; color: #fff; background: linear-gradient(135deg, #c91212, #ef3a22); border-radius: 14px; padding: 10px 22px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .page-title { width: 94%; margin: 24px auto 0; font-size: 40px; color: #fff; }
+        .content { width: 94%; margin: 18px auto 40px; }
+        .cart-container { background: rgba(255,255,255,0.95); border-radius: 24px; padding: 28px; box-shadow: 0 14px 32px rgba(0,0,0,0.18); color: #222; }
+        .cart-table { width: 100%; border-collapse: collapse; }
+        .cart-table th { text-align: right; padding: 14px; background: #f5f5f5; border-bottom: 2px solid #e0e0e0; font-weight: 800; }
+        .cart-table td { padding: 14px; border-bottom: 1px solid #e0e0e0; }
+        .cart-table tr:hover { background: #fafafa; }
+        .cart-empty { text-align: center; padding: 40px 20px; color: #666; }
+        .cart-actions { margin-top: 28px; text-align: left; display: flex; gap: 14px; }
+        .btn-secondary { border: 2px solid #d92b1f; color: #d92b1f; background: transparent; border-radius: 14px; padding: 10px 22px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn-reserve { border: none; color: #fff; background: linear-gradient(135deg, #c91212, #ef3a22); border-radius: 14px; padding: 10px 22px; font-weight: bold; cursor: pointer; }
+        @media (max-width: 760px) { .topbar, .page-title, .content { width: 96%; } .cart-table { font-size: 14px; } .cart-table th, .cart-table td { padding: 10px; } }
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+    <header class="topbar">
+        <div class="logo">
+            <img src="{% static 'images/logo.png' %}" alt="logo">
+        </div>
+        <nav class="nav-links">
+            <a href="{% url 'home_page' %}">דף הבית</a>
+            <a href="{% url 'packages' %}">חבילות חווה</a>
+            <a href="{% url 'my_orders' %}">ההזמנות שלי</a>
+        </nav>
+        <div class="nav-actions">
+            <span class="user-name">{{ full_name }}</span>
+            <a href="{% url 'my_orders' %}" class="cart-icon">🛒</a>
+            <a href="{% url 'logout' %}" class="btn-solid">התנתקות</a>
+        </div>
+    </header>
+
+    <h1 class="page-title">{{ page_heading }}</h1>
+
+    <div class="content">
+        <div class="cart-container">
+            {% if orders %}
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>שם החבילה</th>
+                            <th>מחיר</th>
+                            <th>התחלת שמירה (ReservedAt)</th>
+                            <th>תפוגת שמירה (ExpiresAt)</th>
+                            <th>פעולה</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item_data in orders %}
+                            <tr id="cart-item-{{ item_data.item.id }}">
+                                <td>{{ item_data.item.package_name }}</td>
+                                <td>₪{{ item_data.item.package.price }}</td>
+                                <td>{{ item_data.item.reserved_at|date:"d/m H:i" }}</td>
+                                <td>{{ item_data.item.expires_at|date:"d/m H:i" }}</td>
+                                <td>
+                                    <div style="font-size: 12px; color: #444; margin-bottom: 8px;">שמירה בעגלה: {{ item_data.item.package.reservation_minutes }} דקות מההוספה.</div>
+                                    {% if item_data.cancelable %}
+                                        <button class="btn-secondary cancel-button" data-item-id="{{ item_data.item.id }}">ביטול הזמנה</button>
+                                    {% else %}
+                                        <span style="color: #999;">חלון הביטול עבר</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="cart-actions">
+                    <a href="{% url 'packages' %}" class="btn-secondary">המשך קניות</a>
+                    <button class="btn-reserve">סיים הזמנה</button>
+                </div>
+                <div id="cancel-message" style="margin-top: 16px; color: #d92b1f; font-weight: bold;"></div>
+                <script>
+                    function getCookie(name) {
+                        let cookieValue = null;
+                        if (document.cookie && document.cookie !== '') {
+                            const cookies = document.cookie.split(';');
+                            for (let i = 0; i < cookies.length; i++) {
+                                const cookie = cookies[i].trim();
+                                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                    break;
+                                }
+                            }
+                        }
+                        return cookieValue;
+                    }
+
+                    document.querySelectorAll('.cancel-button').forEach(button => {
+                        button.addEventListener('click', async () => {
+                            const itemId = button.dataset.itemId;
+                            const message = document.getElementById('cancel-message');
+                            message.textContent = '';
+
+                            const response = await fetch('{% url "cancel_user_package" order_id=0 %}'.replace('/0/', '/' + itemId + '/'), {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': getCookie('csrftoken'),
+                                    'Accept': 'application/json',
+                                },
+                            });
+
+                            if (response.ok) {
+                                document.getElementById('cart-item-' + itemId).remove();
+                                message.textContent = 'ההזמנה בוטלה בהצלחה.';
+                            } else {
+                                const data = await response.json();
+                                message.textContent = data.error || 'שגיאה בביטול ההזמנה.';
+                            }
+                        });
+                    });
+                </script>
+            {% else %}
+                <div class="cart-empty">
+                    {% if page_heading == 'ההזמנות שלי' %}
+                        <p style="font-size: 18px; margin-bottom: 14px;">אין הזמנות פעילות</p>
+                        <p style="color: #999;">לא נמצאו הזמנות בתוקף. הוסף חבילה מהרשימה.</p>
+                    {% else %}
+                        <p style="font-size: 18px; margin-bottom: 14px;">העגלה שלך ריקה</p>
+                        <p style="color: #999;">עדיין לא הוספת חבילות לעגלה.</p>
+                    {% endif %}
+                    <a href="{% url 'packages' %}" class="btn-solid" style="margin-top: 20px; display: inline-block;">לחיפוש חבילות</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</body>
+</html>
