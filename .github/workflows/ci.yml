@@ -5,6 +5,7 @@ on:
     branches:
       - develop
       - Package-management
+      - Hackathon
 
   pull_request:
     branches:
