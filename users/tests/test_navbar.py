@@ -246,7 +246,6 @@ class NavbarIntegrationTests(TestCase):
             farm_area="אזור א",
             price=80,
             capacity=10,
-            capacity=10,
             is_available=True,
             reservation_minutes=30,
             image_url=""
