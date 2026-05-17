@@ -6,6 +6,7 @@ on:
       - develop
       - Package-management
       - main
+      - Hackathon
 
   workflow_dispatch:
 
