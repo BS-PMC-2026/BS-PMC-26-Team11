@@ -1,3 +1,5 @@
+{% load static %}
+
 <style>
     .site-navbar {
         position: sticky;
@@ -6,7 +8,7 @@
         height: 76px;
         background: #fff;
         border-bottom: 1px solid #eeeeee;
-        box-shadow: 0 4px 18px rgba(20, 20, 20, 0.06);
+        box-shadow: 0 4px 18px rgba(20,20,20,0.06);
         direction: rtl;
     }
 
@@ -27,19 +29,13 @@
         color: #151515;
         font-size: 22px;
         font-weight: 900;
-        white-space: nowrap;
         text-decoration: none;
+        white-space: nowrap;
     }
 
-    .site-navbar__brand-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 14px;
-        background: linear-gradient(135deg, #ef3a22, #d71920);
-        color: #fff;
-        display: grid;
-        place-items: center;
-        box-shadow: 0 8px 18px rgba(215, 25, 32, 0.25);
+    .site-navbar__brand-flame {
+        width: 30px;
+        height: 30px;
     }
 
     .site-navbar__links {
@@ -60,10 +56,6 @@
         text-decoration: none;
     }
 
-    .site-navbar__links a.is-active {
-        color: #d71920;
-    }
-
     .site-navbar__actions {
         display: flex;
         align-items: center;
@@ -74,33 +66,46 @@
         white-space: nowrap;
     }
 
+    .site-navbar__hello {
+        color: #151515;
+        font-weight: 800;
+    }
+
     .site-navbar__login,
-    .site-navbar__logout {
+    .site-navbar__logout,
+    .site-navbar__cart,
+    .site-navbar__links a {
+        position: relative;
+        padding: 8px 14px;
+        border-radius: 999px;
         border: 0;
         background: transparent;
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
         font: inherit;
         cursor: pointer;
+        text-decoration: none;
+        transition: 0.25s;
+    }
+
+    .site-navbar__links a:hover,
+    .site-navbar__login:hover,
+    .site-navbar__logout:hover,
+    .site-navbar__cart:hover {
+        background-color: #ffe6ea;
+        color: #d71920;
+        transform: translateY(-2px);
+    }
+
+    .site-navbar__links a.is-active {
+        color: #d71920;
+        font-weight: bold;
     }
 
     .site-navbar__cart {
-        position: relative;
         width: 42px;
         height: 42px;
-        border: 0;
-        border-radius: 50%;
-        background: #fff;
-        color: #222;
         display: grid;
         place-items: center;
         font-size: 22px;
-        cursor: pointer;
-    }
-
-    .site-navbar__cart:hover {
-        background: #f7f7f7;
     }
 
     .site-navbar__badge {
@@ -119,80 +124,211 @@
         font-weight: 900;
     }
 
-    @media (max-width: 900px) {
-        .site-navbar {
-            height: auto;
-        }
-
-        .site-navbar__inner {
-            padding: 16px 0;
-            flex-wrap: wrap;
-        }
-
-        .site-navbar__links {
-            order: 3;
-            flex-basis: 100%;
-            flex-wrap: wrap;
-            gap: 18px;
-        }
+    .cart-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9998;
+        background: rgba(0,0,0,0.35);
+        opacity: 0;
+        visibility: hidden;
+        transition: 0.25s;
     }
-</style>
-<style>
-    .site-navbar__links a,
-    .site-navbar__login,
-    .site-navbar__logout,
-    .site-navbar__cart {
-        position: relative;
-        padding: 8px 14px;
+
+    .cart-overlay.is-open {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .side-cart {
+        position: fixed;
+        top: 0;
+        left: -480px;
+        z-index: 9999;
+        width: min(470px, 96vw);
+        height: 100vh;
+        background: #fff;
+        color: #111;
+        transition: left 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        direction: rtl;
+        border-radius: 0 14px 14px 0;
+        overflow: hidden;
+    }
+
+    .side-cart.is-open {
+        left: 0;
+    }
+
+    .side-cart-header {
+        height: 88px;
+        padding: 0 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #eee;
+    }
+
+    .side-cart-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 22px;
+        font-weight: 900;
+    }
+
+    .cart-close {
+        border: 0;
+        background: transparent;
+        font-size: 30px;
+        cursor: pointer;
+        color: #777;
+    }
+
+    .cart-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+        display: grid;
+        gap: 16px;
+        align-content: start;
+    }
+
+    .drawer-item {
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        gap: 16px;
+        padding: 16px;
+        border: 1px solid #eeeeee;
+        border-radius: 20px;
+        background: #fbfbfb;
+    }
+
+    .drawer-item-image {
+        width: 96px;
+        height: 96px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #eee;
+    }
+
+    .drawer-item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .drawer-item-title {
+        font-weight: 900;
+        font-size: 15px;
+        margin-bottom: 10px;
+    }
+
+    .drawer-item-price {
+        color: #d71920;
+        font-size: 19px;
+        font-weight: 900;
+        margin-bottom: 18px;
+    }
+
+    .drawer-item-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .qty-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+        border: 1px solid #e7e7e7;
         border-radius: 999px;
-        text-decoration: none;
-        transition: all 0.25s ease;
+        padding: 5px 10px;
+        font-weight: 800;
+    }
+
+    .qty-control button {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 0;
+        background: #f2f2f2;
+        font-weight: 900;
         cursor: pointer;
     }
 
-    .site-navbar__links a:hover,
-    .site-navbar__login:hover,
-    .site-navbar__logout:hover,
-    .site-navbar__cart:hover {
-        background-color: #ffe6ea;
+    .remove-button {
+        border: 0;
+        background: transparent;
         color: #d71920;
-        transform: translateY(-2px);
+        font-weight: 900;
+        cursor: pointer;
     }
 
-    .site-navbar__links a::after {
-        content: "";
-        position: absolute;
-        left: 50%;
-        bottom: 2px;
-        width: 0;
-        height: 2px;
-        background-color: #d71920;
-        transform: translateX(-50%);
-        transition: width 0.25s ease;
+    .cart-empty {
+        text-align: center;
+        color: #777;
+        padding: 40px 10px;
     }
 
-    .site-navbar__links a:hover::after {
-        width: 60%;
+    .cart-summary {
+        border-top: 1px solid #eee;
+        padding: 26px 28px;
+        background: #fff;
     }
 
-    .site-navbar__links a.is-active {
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 18px;
+        font-weight: 900;
+        margin-bottom: 18px;
+    }
+
+    .summary-total {
         color: #d71920;
-        font-weight: bold;
+        font-size: 28px;
     }
 
-    .site-navbar__links a:focus-visible,
-    .site-navbar__login:focus-visible,
-    .site-navbar__logout:focus-visible,
-    .site-navbar__cart:focus-visible {
-        outline: 2px solid #d71920;
-        outline-offset: 3px;
+    .checkout-button {
+        display: block;
+        width: 100%;
+        background: #e01922;
+        color: #fff;
+        border-radius: 16px;
+        padding: 16px;
+        text-align: center;
+        font-weight: 900;
+        text-decoration: none;
+    }
+
+    .continue-shopping {
+        display: block;
+        margin: 16px auto 0;
+        border: 0;
+        background: transparent;
+        color: #777;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    body.cart-open {
+        overflow: hidden;
     }
 </style>
+
 <header class="site-navbar">
     <div class="site-navbar__inner">
         <a href="{% url 'home' %}" class="site-navbar__brand" aria-label="דף הבית">
-            <span class="site-navbar__brand-icon">🌶️</span>
             <span>הדינרים</span>
+            <svg class="site-navbar__brand-flame" viewBox="0 0 64 64" aria-hidden="true">
+                <path d="M36.8 5.5C39.8 17 55 21.8 55 39.2C55 51.7 44.8 60 32.1 60C19.3 60 9 51.8 9 39.1C9 28.5 15.1 21.2 22.4 14.4C21.7 23.2 27 27.2 31.2 28.9C30.2 18.9 33.1 10.8 36.8 5.5Z"
+                      fill="none" stroke="#d71920" stroke-width="6"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
         </a>
 
         <nav class="site-navbar__links" aria-label="ניווט ראשי">
@@ -204,41 +340,199 @@
 
         <div class="site-navbar__actions">
             {% if is_authenticated %}
-                <a href="{% url 'logout' %}" class="site-navbar__logout"><span>👤</span><span>התנתקות</span></a>
-            {% else %}
-                {% if login_modal %}
-                    <button type="button" class="site-navbar__login" data-open-login><span>👤</span><span>התחברות</span></button>
-                {% else %}
-                    <a href="{% url 'login' %}" class="site-navbar__login"><span>👤</span><span>התחברות</span></a>
-                {% endif %}
-            {% endif %}
+                <span class="site-navbar__hello">
+                    שלום
+                    {% if full_name %}{{ full_name }}
+                    {% elif request.session.full_name %}{{ request.session.full_name }}
+                    {% elif request.user.email %}{{ request.user.email }}
+                    {% else %}משתמש{% endif %}
+                </span>
 
-            {% if is_authenticated and show_cart %}
                 <button type="button" class="site-navbar__cart" data-cart-open aria-label="פתיחת סל הקניות">
                     <span>🛒</span>
-                    {% if cart_count > 0 %}<span class="site-navbar__badge">{{ cart_count }}</span>{% endif %}
+                    {% if cart_count > 0 %}
+                        <span class="site-navbar__badge">{{ cart_count }}</span>
+                    {% endif %}
                 </button>
-            {% elif is_authenticated and cart_count %}
-                <a href="{% url 'my_orders' %}" class="site-navbar__cart" aria-label="סל הקניות">
-                    <span>🛒</span>
-                    <span class="site-navbar__badge">{{ cart_count }}</span>
-                </a>
+
+                <a href="{% url 'logout' %}" class="site-navbar__logout">התנתקות</a>
+            {% else %}
+                {% if login_modal %}
+                    <button type="button" class="site-navbar__login" data-open-login>התחברות</button>
+                    <button type="button" class="site-navbar__cart" data-open-login aria-label="עגלה - נדרש להתחבר">🛒</button>
+                {% else %}
+                    <a href="{% url 'login' %}" class="site-navbar__login">התחברות</a>
+                    <a href="{% url 'login' %}" class="site-navbar__cart" aria-label="עגלה - נדרש להתחבר">🛒</a>
+                {% endif %}
             {% endif %}
         </div>
     </div>
 </header>
 
+<div class="cart-overlay" data-cart-close></div>
+
+<aside class="side-cart" aria-label="סל הקניות" aria-hidden="true">
+    <div class="side-cart-header">
+        <div class="side-cart-title">
+            <span>🛍️</span>
+            <span>סל הקניות</span>
+        </div>
+        <button type="button" class="cart-close" data-cart-close aria-label="סגירת סל הקניות">×</button>
+    </div>
+
+    <div class="cart-list">
+        {% if cart_items %}
+            {% for cart_item in cart_items %}
+                <div class="drawer-item" id="drawer-cart-item-{{ cart_item.item.id }}" data-price="{{ cart_item.price }}">
+                    <div class="drawer-item-image">
+                        {% if cart_item.item.package.image_url %}
+                            <img src="{{ cart_item.item.package.image_url }}" alt="{{ cart_item.item.package_name }}">
+                        {% else %}
+                            <img src="{% static 'images/red-peppers.png' %}" alt="{{ cart_item.item.package_name }}">
+                        {% endif %}
+                    </div>
+
+                    <div class="drawer-item-content">
+                        <div class="drawer-item-title">{{ cart_item.item.package_name }}</div>
+                        <div class="drawer-item-price">₪{{ cart_item.price }}</div>
+
+                        <div class="drawer-item-actions">
+                            <button type="button" class="remove-button" data-remove-item="{{ cart_item.item.id }}">הסר</button>
+
+                            <div class="qty-control">
+                                <button type="button" class="qty-plus">+</button>
+                                <span class="qty-value">{{ cart_item.quantity|default:1 }}</span>
+                                <button type="button" class="qty-minus">−</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="cart-empty">סל הקניות ריק.</div>
+        {% endif %}
+    </div>
+
+    <div class="cart-summary">
+        <div class="summary-row">
+            <span>סה"כ</span>
+            <span class="summary-total">₪{{ cart_total|default:0 }}</span>
+        </div>
+
+        <a href="{% url 'my_orders' %}" class="checkout-button">המשך לתשלום</a>
+        <button type="button" class="continue-shopping" data-cart-close>המשך בקנייה</button>
+    </div>
+</aside>
+
 <script>
-    (function () {
-        function syncActiveHash() {
-            const hash = window.location.hash.replace('#', '');
-            if (!['gallery', 'about'].includes(hash)) return;
-            document.querySelectorAll('.site-navbar__links a').forEach(function (link) {
-                link.classList.toggle('is-active', link.dataset.navKey === hash);
-            });
+(function () {
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const overlay = document.querySelector('.cart-overlay');
+    const drawer = document.querySelector('.side-cart');
+
+    function openCart() {
+        if (!overlay || !drawer) return;
+        overlay.classList.add('is-open');
+        drawer.classList.add('is-open');
+        drawer.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('cart-open');
+    }
+
+    function closeCart() {
+        if (!overlay || !drawer) return;
+        overlay.classList.remove('is-open');
+        drawer.classList.remove('is-open');
+        drawer.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('cart-open');
+    }
+
+    function updateTotal() {
+        let total = 0;
+
+        document.querySelectorAll('.drawer-item').forEach(function (item) {
+            const price = parseFloat(item.dataset.price || '0');
+            const qty = parseInt(item.querySelector('.qty-value')?.textContent || '1');
+            total += price * qty;
+        });
+
+        const totalElement = document.querySelector('.summary-total');
+        if (totalElement) {
+            totalElement.textContent = '₪' + total.toFixed(2);
+        }
+    }
+
+    document.addEventListener('click', async function (event) {
+        const cartButton = event.target.closest('[data-cart-open]');
+        const closeButton = event.target.closest('[data-cart-close]');
+        const plusButton = event.target.closest('.qty-plus');
+        const minusButton = event.target.closest('.qty-minus');
+        const removeButton = event.target.closest('[data-remove-item]');
+
+        if (cartButton) {
+            event.preventDefault();
+            openCart();
         }
 
-        syncActiveHash();
-        window.addEventListener('hashchange', syncActiveHash);
-    })();
+        if (closeButton) {
+            event.preventDefault();
+            closeCart();
+        }
+
+        if (plusButton) {
+            const row = plusButton.closest('.drawer-item');
+            const qty = row.querySelector('.qty-value');
+            qty.textContent = parseInt(qty.textContent) + 1;
+            updateTotal();
+        }
+
+        if (minusButton) {
+            const row = minusButton.closest('.drawer-item');
+            const qty = row.querySelector('.qty-value');
+            const current = parseInt(qty.textContent);
+
+            if (current > 1) {
+                qty.textContent = current - 1;
+                updateTotal();
+            }
+        }
+
+        if (removeButton) {
+            const itemId = removeButton.dataset.removeItem;
+
+            const response = await fetch('{% url "cancel_user_package" order_id=0 %}'.replace('/0/', '/' + itemId + '/'), {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const row = document.getElementById('drawer-cart-item-' + itemId);
+                if (row) row.remove();
+                updateTotal();
+            }
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') closeCart();
+    });
+
+    updateTotal();
+})();
 </script>
