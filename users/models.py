@@ -16,9 +16,11 @@ class User(models.Model):
 
     def __str__(self):
         return self.full_name
+#jkkknkkjkjjkj
 
 
 class Package(models.Model):
+    
     name = models.CharField(max_length=120)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
