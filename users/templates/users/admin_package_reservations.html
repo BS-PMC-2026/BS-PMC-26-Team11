@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>הגדרת זמן שמירה בעגלה</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { min-height: 100vh; background: linear-gradient(rgba(15, 15, 15, 0.55), rgba(15, 15, 15, 0.7)), url("{% static 'images/red-peppers.jpg' %}") center/cover no-repeat; color: #fff; }
+        .page-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+        .topbar { width: 94%; margin: 20px auto 0; background: rgba(255,255,255,0.94); border-radius: 22px; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 25px rgba(0,0,0,0.18); }
+        .logo { display: flex; align-items: center; gap: 14px; }
+        .logo img { height: 52px; object-fit: contain; }
+        .nav-links { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+        .nav-links a { text-decoration: none; color: #333; font-weight: bold; font-size: 15px; }
+        .nav-actions { display: flex; gap: 14px; align-items: center; }
+        .user-name { font-weight: bold; color: #333; }
+        .btn-solid { border: none; color: #fff; background: linear-gradient(135deg, #c91212, #ef3a22); border-radius: 14px; padding: 10px 22px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .page-title { width: 94%; margin: 24px auto 0; font-size: 36px; color: #fff; }
+        .content { width: 94%; margin: 18px auto 40px; }
+        .panel { background: rgba(255,255,255,0.95); border-radius: 24px; padding: 28px; box-shadow: 0 14px 32px rgba(0,0,0,0.18); color: #222; }
+        .section-title { font-size: 22px; margin-bottom: 14px; color: #171717; }
+        .hint { font-size: 14px; color: #555; margin-bottom: 20px; line-height: 1.5; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid #e0e0e0; text-align: right; }
+        th { background: #f5f5f5; font-weight: 800; }
+        .ltr-inputs input { direction: ltr; text-align: left; width: 100px; padding: 10px 12px; border-radius: 12px; border: 1px solid #ccc; font-size: 15px; }
+        .submit-row { margin-top: 22px; }
+        .submit-row button { border: none; color: #fff; background: linear-gradient(135deg, #c91212, #ef3a22); border-radius: 14px; padding: 12px 22px; font-weight: bold; cursor: pointer; }
+        .message { padding: 14px 18px; border-radius: 16px; margin-bottom: 16px; }
+        .message.success { background: rgba(42,152,37,0.12); border-right: 4px solid #2a9825; color: #1a5c18; }
+        .message.error { background: rgba(217,43,31,0.1); border-right: 4px solid #d92b1f; color: #8b1a12; }
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+    <header class="topbar">
+        <div class="logo">
+            <img src="{% static 'images/logo.png' %}" alt="logo">
+        </div>
+        <nav class="nav-links">
+            <a href="{% url 'home_page' %}">דף הבית</a>
+            <a href="{% url 'packages' %}">חבילות חווה</a>
+            <a href="{% url 'my_orders' %}">ההזמנות שלי</a>
+            <a href="{% url 'promotions' %}">הגדרת מבצעים</a>
+            <a href="{% url 'package_reservation_admin' %}" style="color: #c91212; font-weight: 900;">זמן שמירה בעגלה</a>
+        </nav>
+        <div class="nav-actions">
+            <span class="user-name">{{ full_name }}</span>
+            <a href="{% url 'logout' %}" class="btn-solid">התנתקות</a>
+        </div>
+    </header>
+
+    <h1 class="page-title">טופס חבילות — זמן שמירה בעגלה (דקות)</h1>
+
+    <div class="content">
+        <div class="panel">
+            {% if success_message == 'saved' %}
+                <div class="message success">ההגדרות נשמרו בהצלחה.</div>
+            {% endif %}
+            {% if error_message %}
+                <div class="message error">{{ error_message }}</div>
+            {% endif %}
+
+            <div class="section-title">הגדרת ReservationMinutes לכל חבילה</div>
+            <p class="hint">הזן את משך השמירה בדקות. כשמשתמש מוסיף חבילה לעגלה, השרת ישמור ReservedAt ו־ExpiresAt בטבלת CartItems. אם לא הושלמה הרכישה בזמן — השמירה תשוחרר אוטומטית (סטטוס Expired).</p>
+
+            <form method="post" action="{% url 'package_reservation_admin' %}">
+                {% csrf_token %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>חבילה</th>
+                            <th>זמן שמירה (דקות)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for package in packages %}
+                            <tr>
+                                <td>{{ package.name }}</td>
+                                <td>
+                                    <div class="ltr-inputs">
+                                        <input type="number" name="reservation_minutes_{{ package.id }}" min="1" max="10080" step="1" value="{{ package.reservation_minutes }}" required inputmode="numeric" />
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="submit-row">
+                    <button type="submit">שמור הגדרות</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
