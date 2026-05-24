@@ -601,7 +601,7 @@
     </style>
 </head>
 <body>
-    {% include 'includes/site_navbar.html' with active_nav='home' login_modal=True %}
+    {% include 'includes/site_navbar.html' with active_nav='home' login_modal=False %}
 
     <main>
         <section class="hero" id="home">
@@ -687,7 +687,11 @@
                 <h2>מוכנים להתחיל את המסע החריף שלכם?</h2>
                 <p>הצטרפו לאלפי חובבי חריפים ותתחילו לחקור את העולם המרתק של הטעמים החריפים</p>
                 <div class="cta-buttons">
-                    <a href="{% url 'signup' %}" class="cta-button">הירשמו עכשיו</a>
+                    {% if user_role == 'admin' %}
+                        <span class="cta-button" style="opacity: 0.6; cursor: not-allowed;">הירשמו עכשיו</span>
+                    {% else %}
+                        <a href="{% url 'signup' %}" class="cta-button">הירשמו עכשיו</a>
+                    {% endif %}
                     <a href="{% url 'packages' %}" class="cta-button">לחצו לקטלוג המלא</a>
                 </div>
             </div>
@@ -698,13 +702,13 @@
         <div class="footer-grid">
             <section>
                 <h3>חוות החריף</h3>
-                <p>חווה אורגנית לגידול חריפים נדירים ויצירת מוצרים איכותיים בגליל העליון</p>
+                <p>חווה אורגנית לגידול חריפים נדירים ויצירת מוצרים איכותיים בעוטף עזה </p>
             </section>
             <section>
                 <h3>קישורים</h3>
                 <div class="footer-links">
-                    <a href="{% url 'packages' %}">מוצרים</a>
-                    <a href="#activities">פעילויות</a>
+                    <a href="#gallery">גלריה</a>
+                    <a href="{% url 'packages' %}">פעילויות</a>
                     <a href="#about">אודות</a>
                 </div>
             </section>
@@ -712,7 +716,7 @@
                 <h3>צרו קשר</h3>
                 <p>טלפון: 04-1234567</p>
                 <p>אימייל: info@spicyfarm.co.il</p>
-                <p>גליל עליון, ישראל</p>
+                <p>עוטף עזה, ישראל</p>
             </section>
         </div>
         <div class="footer-bottom">© 2026 חוות החריף. כל הזכויות שמורות.</div>
@@ -755,7 +759,11 @@
 
             <div class="modal-register">
                 <span>אין לך חשבון</span>
-                <a href="{% url 'signup' %}">הרישום עכשיו</a>
+                {% if user_role == 'admin' %}
+                    <span style="opacity: 0.6; cursor: not-allowed;">הרישום עכשיו</span>
+                {% else %}
+                    <a href="{% url 'signup' %}">הרישום עכשיו</a>
+                {% endif %}
             </div>
         </section>
     </div>

@@ -49,7 +49,9 @@
         .stock-icon { color: var(--red); font-size: 17px; }
         .product-divider { height: 1px; background: var(--border); margin: auto 0 18px; }
         .product-bottom { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-        .product-price { color: var(--red); font-size: 26px; font-weight: 900; white-space: nowrap; }
+        .product-price { display: flex; align-items: flex-end; gap: 8px; white-space: nowrap; }
+        .product-price-value { color: var(--red); font-size: 26px; font-weight: 900; }
+        .product-price-original { color: var(--muted); font-size: 14px; text-decoration: line-through; font-weight: 700; }
         .order-button { border: 0; background: var(--red); color: #fff; border-radius: 14px; padding: 12px 18px; font-size: 15px; font-weight: 900; cursor: pointer; min-width: 122px; transition: background 0.2s ease, transform 0.2s ease; }
         .order-button:hover { background: var(--red-dark); transform: translateY(-1px); }
         .order-button:disabled { background: #f3b5bc; color: #fff; cursor: not-allowed; transform: none; box-shadow: none; }
@@ -99,6 +101,7 @@
         .login-modal-register { margin-top: 20px; text-align: center; color: #777; font-size: 14px; }
         .login-modal-register a { color: var(--red); font-weight: 900; }
         body.login-modal-open { overflow: hidden; }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
         @media (max-width: 1150px) { .products-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 860px) { .topbar { height: auto; } .topbar-inner { padding: 16px 0; flex-wrap: wrap; } .nav-links { order: 3; flex-basis: 100%; flex-wrap: wrap; } .products-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 560px) { .products-grid { grid-template-columns: 1fr; } .page-header h1 { font-size: 34px; } .product-card { min-height: auto; } .product-bottom { align-items: stretch; flex-direction: column; } .order-button { width: 100%; } }
@@ -106,7 +109,7 @@
 </head>
 <body>
 <div class="page-wrapper">
-    {% include 'includes/site_navbar.html' with active_nav='tours' show_cart=True login_modal=True %}
+    {% include 'includes/site_navbar.html' with active_nav='tours' show_cart=True login_modal=False %}
 
     <main class="products-page">
         <section class="page-header">
@@ -151,16 +154,21 @@
                         <div class="product-bottom">
                             <div class="product-price">
                                 {% if package.has_active_discount %}
-                                    ₪{{ package.get_discounted_price }}
+                                    <span class="product-price-original">₪{{ package.price|floatformat:0 }}</span>
+                                    <span class="product-price-value">₪{{ package.get_discounted_price }}</span>
                                 {% else %}
-                                    ₪{{ package.price|floatformat:0 }}
+                                    <span class="product-price-value">₪{{ package.price|floatformat:0 }}</span>
                                 {% endif %}
                             </div>
                             {% if package.available_capacity > 0 and package.is_available %}
-                                <form method="post" action="{% url 'add_to_cart' package.id %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="order-button">הזמן עכשיו</button>
-                                </form>
+                                {% if is_authenticated %}
+                                    <form method="post" action="{% url 'add_to_cart' package.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="order-button">הזמן עכשיו</button>
+                                    </form>
+                                {% else %}
+                                    <a href="{% url 'login' %}" class="order-button" style="display: inline-block; text-align: center; text-decoration: none;">הזמן עכשיו</a>
+                                {% endif %}
                             {% else %}
                                 <button type="button" class="order-button" disabled>אזל מהמלאי</button>
                             {% endif %}
@@ -270,6 +278,27 @@
     const loginCloseButtons = document.querySelectorAll('[data-close-login]');
     const loginFirstInput = document.getElementById('tours-login-email');
 
+    function autoDismissMessage(message) {
+        setTimeout(() => {
+            message.style.animation = 'fadeOut 0.3s ease forwards';
+            setTimeout(() => message.remove(), 300);
+        }, 3000);
+    }
+
+    document.querySelectorAll('.message.success').forEach(autoDismissMessage);
+
+    const observer = new MutationObserver(() => {
+        document.querySelectorAll('.message.success:not([data-dismissing])').forEach(message => {
+            message.setAttribute('data-dismissing', 'true');
+            autoDismissMessage(message);
+        });
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
+
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -327,6 +356,31 @@
         if (event.key === 'Escape' && loginModal.classList.contains('is-open')) closeLoginModal();
     });
 
+    function updateCartTotal(total) {
+        const totalElement = document.querySelector('.summary-total');
+        if (totalElement) {
+            totalElement.textContent = '₪' + Math.round(total);
+        }
+    }
+
+    function updateCartBadge(count) {
+        const cartButton = document.querySelector('[data-cart-open]');
+        if (!cartButton) return;
+
+        let badge = cartButton.querySelector('.site-navbar__badge');
+
+        if (count > 0) {
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'site-navbar__badge';
+                cartButton.appendChild(badge);
+            }
+            badge.textContent = count;
+        } else if (badge) {
+            badge.remove();
+        }
+    }
+
     document.querySelectorAll('[data-remove-item]').forEach(button => {
         button.addEventListener('click', async () => {
             const itemId = button.dataset.removeItem;
@@ -338,8 +392,15 @@
                 },
             });
             if (response.ok) {
+                const data = await response.json();
                 const row = document.getElementById('drawer-cart-item-' + itemId);
                 if (row) row.remove();
+                if (data.cart_total !== undefined) {
+                    updateCartTotal(data.cart_total);
+                }
+                if (data.cart_count !== undefined) {
+                    updateCartBadge(data.cart_count);
+                }
             }
         });
     });

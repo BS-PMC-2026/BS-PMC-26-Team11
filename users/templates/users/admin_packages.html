@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>הגדרת מבצעים - חוות החריף</title>
+    <title>ניהול חבילות - חוות החריף</title>
     <style>
         :root {
             --red: #d71920;
@@ -140,13 +140,6 @@
             color: var(--text);
         }
 
-        .hint {
-            font-size: 15px;
-            color: var(--muted);
-            margin-bottom: 24px;
-            line-height: 1.6;
-        }
-
         .message {
             padding: 14px 18px;
             border-radius: 16px;
@@ -180,59 +173,24 @@
         }
 
         .form-row input,
-        .form-row select {
+        .form-row textarea {
             width: 100%;
             padding: 12px 14px;
             border-radius: 12px;
             border: 1px solid var(--border);
             font-size: 15px;
+            font-family: inherit;
         }
 
         .form-row input:focus,
-        .form-row select:focus {
+        .form-row textarea:focus {
             outline: none;
             border-color: var(--red);
             box-shadow: 0 0 0 3px rgba(215,25,32,0.1);
         }
 
-        .ltr-inputs input {
-            direction: ltr;
-            text-align: left;
-            unicode-bidi: plaintext;
-        }
-
-        .mode-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-bottom: 24px;
-            align-items: center;
-        }
-
-        .mode-row label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 700;
-            color: var(--text);
-            cursor: pointer;
-        }
-
-        .mode-row input[type="radio"] {
-            width: auto;
-            cursor: pointer;
-        }
-
-        .mode-label {
-            font-weight: 800;
-            color: var(--text);
-        }
-
-        .field-hint {
-            font-size: 13px;
-            color: var(--muted);
-            margin-top: 6px;
-            font-weight: 500;
+        .form-row.full {
+            grid-template-columns: 1fr;
         }
 
         .submit-row {
@@ -280,14 +238,58 @@
             font-size: 15px;
         }
 
-        .status-active {
-            color: #1a8a2b;
+        .package-name {
             font-weight: 700;
+            color: var(--text);
         }
 
-        .status-inactive {
-            color: #d92b1f;
-            font-weight: 700;
+        .package-info {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .image-preview {
+            margin-top: 12px;
+            display: none;
+        }
+
+        .image-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .image-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            align-items: center;
+        }
+
+        .clear-image-btn {
+            background: #f5f5f5;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .clear-image-btn:hover {
+            background: #ffe6ea;
+            color: var(--red);
+            border-color: var(--red);
+        }
+
+        .image-name {
+            font-size: 13px;
+            color: var(--muted);
+            padding: 8px 0;
         }
 
         @media (max-width: 1150px) {
@@ -320,7 +322,7 @@
             <a href="{% url 'home' %}">דף הבית</a>
             <a href="{% url 'admin_dashboard' %}">לוח בקרה</a>
             <a href="{% url 'package_reservation_admin' %}">זמן שמירה</a>
-            <a href="{% url 'promotions' %}" class="active">מבצעים</a>
+            <a href="{% url 'promotions' %}">מבצעים</a>
         </div>
 
         <div class="navbar-actions">
@@ -332,131 +334,142 @@
 
 <div class="container">
     <div class="header">
-        <h1>הגדרת מבצעים</h1>
-        <p>יצירה וניהול של מבצעים והנחות לחבילות</p>
+        <h1>ניהול חבילות</h1>
+        <p>הוסף חבילות חדשות וצפה בכל החבילות הזמינות</p>
     </div>
 
     <div class="panel">
         {% if success_message %}
-            <div class="message success">✓ המבצע נשמר בהצלחה.</div>
+            <div class="message success">✓ החבילה נוספה בהצלחה.</div>
         {% endif %}
         {% if error_message %}
             <div class="message error">✗ {{ error_message }}</div>
         {% endif %}
 
-        <div class="section-title">יצירת מבצע חדש</div>
-        <form method="post" action="{% url 'promotions' %}">
+        <div class="section-title">הוסף חבילה חדשה</div>
+        <form method="post" action="{% url 'admin_packages_view' %}" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-row">
                 <div>
-                    <label for="package_id">חבילה</label>
-                    <select id="package_id" name="package_id" required>
-                        <option value="">בחר חבילה</option>
-                        {% for package in packages %}
-                            <option value="{{ package.id }}" {% if form_data.package_id|stringformat:'s' == package.id|stringformat:'s' %}selected{% endif %}>{{ package.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            <div class="mode-row">
-                <span class="mode-label">סוג מבצע:</span>
-                <label>
-                    <input type="radio" name="promotion_mode" id="mode_percentage" value="percentage" {% if form_data.promotion_mode != 'sale_price' %}checked{% endif %} />
-                    אחוז הנחה מהמחיר
-                </label>
-                <label>
-                    <input type="radio" name="promotion_mode" id="mode_sale_price" value="sale_price" {% if form_data.promotion_mode == 'sale_price' %}checked{% endif %} />
-                    מחיר מבצע ידני
-                </label>
-            </div>
-            <div class="form-row">
-                <div>
-                    <label for="discount_percentage">אחוז הנחה</label>
-                    <div class="ltr-inputs">
-                        <input id="discount_percentage" name="discount_percentage" type="number" inputmode="numeric" min="1" max="100" step="1" value="{{ form_data.discount_percentage }}" placeholder="לדוגמה 20" autocomplete="off" />
-                    </div>
-                    <div class="field-hint">בין 1 ל־100. לא בשילוב עם מחיר ידני.</div>
+                    <label for="name">שם החבילה</label>
+                    <input id="name" name="name" type="text" required placeholder="לדוגמה: סיור חווה בוקר" />
                 </div>
                 <div>
-                    <label for="sale_price">מחיר מבצע (₪)</label>
-                    <div class="ltr-inputs">
-                        <input id="sale_price" name="sale_price" type="number" inputmode="decimal" min="0.01" step="0.01" value="{{ form_data.sale_price }}" placeholder="לדוגמה 89.90" autocomplete="off" />
-                    </div>
-                    <div class="field-hint">חייב להיות נמוך ממחיר החבילה המקורי.</div>
+                    <label for="price">מחיר (₪)</label>
+                    <input id="price" name="price" type="number" step="0.01" min="0" required placeholder="לדוגמה: 99.90" />
                 </div>
             </div>
             <div class="form-row">
                 <div>
-                    <label for="start_date">תאריך התחלה</label>
-                    <div class="ltr-inputs">
-                        <input id="start_date" name="start_date" type="date" value="{{ form_data.start_date }}" autocomplete="off" required />
-                    </div>
+                    <label for="package_type">סוג חבילה</label>
+                    <input id="package_type" name="package_type" type="text" placeholder="לדוגמה: סיור מודרך" />
                 </div>
                 <div>
-                    <label for="end_date">תאריך סיום</label>
-                    <div class="ltr-inputs">
-                        <input id="end_date" name="end_date" type="date" value="{{ form_data.end_date }}" autocomplete="off" required />
+                    <label for="farm_area">אזור החווה</label>
+                    <input id="farm_area" name="farm_area" type="text" placeholder="לדוגמה: דרום" />
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <label for="capacity">קיבולת</label>
+                    <input id="capacity" name="capacity" type="number" min="0" placeholder="מספר משתמשים מקסימלי" />
+                </div>
+                <div>
+                    <label for="image">תמונת החבילה</label>
+                    <input id="image" name="image" type="file" accept="image/*" />
+                    <div class="image-name" id="image-name"></div>
+                    <div class="image-preview" id="image-preview">
+                        <img id="image-preview-img" src="" alt="תמונה מקדימה" />
+                        <div class="image-actions">
+                            <button type="button" class="clear-image-btn" id="clear-image-btn">🗑️ מחק תמונה</button>
+                        </div>
                     </div>
+                </div>
+            </div>
+            <div class="form-row full">
+                <div>
+                    <label for="description">תיאור החבילה</label>
+                    <textarea id="description" name="description" rows="4" placeholder="תאר את החבילה בפירוט..."></textarea>
                 </div>
             </div>
             <div class="submit-row">
-                <button type="submit" class="submit-btn">💾 הוספת מבצע</button>
+                <button type="submit" class="submit-btn">📦 הוסף חבילה</button>
             </div>
         </form>
-        <script>
-        (function () {
-            var modePct = document.getElementById('mode_percentage');
-            var modeSale = document.getElementById('mode_sale_price');
-            var pctInput = document.getElementById('discount_percentage');
-            var saleInput = document.getElementById('sale_price');
-            if (!modePct || !modeSale || !pctInput || !saleInput) return;
-            function sync() {
-                var pct = modePct.checked;
-                pctInput.disabled = !pct;
-                saleInput.disabled = pct;
-            }
-            modePct.addEventListener('change', sync);
-            modeSale.addEventListener('change', sync);
-            sync();
-        })();
-        </script>
     </div>
 
     <div class="panel">
-        <div class="section-title">מבצעים קיימים</div>
+        <div class="section-title">כל החבילות</div>
         <table>
             <thead>
                 <tr>
-                    <th>📦 חבילה</th>
-                    <th>💰 הנחה</th>
-                    <th>📅 תאריך התחלה</th>
-                    <th>📅 תאריך סיום</th>
-                    <th>✅ סטטוס</th>
+                    <th>📦 שם החבילה</th>
+                    <th>💰 מחיר</th>
+                    <th>🎯 סוג</th>
+                    <th>📍 אזור</th>
+                    <th>👥 קיבולת</th>
+                    <th>⚙️ פעולות</th>
                 </tr>
             </thead>
             <tbody>
-                {% for promotion in promotions %}
+                {% for package in packages %}
                     <tr>
-                        <td>{{ promotion.package.name }}</td>
-                        <td>{{ promotion.promotion_label }}</td>
-                        <td>{{ promotion.start_date|date:"d/m/Y" }}</td>
-                        <td>{{ promotion.end_date|date:"d/m/Y" }}</td>
                         <td>
-                            {% if promotion.is_active %}
-                                <span class="status-active">פעיל</span>
-                            {% else %}
-                                <span class="status-inactive">לא פעיל</span>
-                            {% endif %}
+                            <div class="package-name">{{ package.name }}</div>
+                            <div class="package-info">{{ package.description|truncatewords:10 }}</div>
+                        </td>
+                        <td>₪{{ package.price }}</td>
+                        <td>{{ package.package_type|default:"-" }}</td>
+                        <td>{{ package.farm_area|default:"-" }}</td>
+                        <td>{{ package.capacity|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'edit_package' package.id %}" style="color: var(--red); text-decoration: underline; font-weight: 700;">✏️ ערוך</a>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 24px; color: var(--muted);">לא קיים מבצע כרגע.</td>
+                        <td colspan="5" style="text-align: center; padding: 24px; color: var(--muted);">אין חבילות כרגע.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+(function () {
+    const imageInput = document.getElementById('image');
+    const imagePreview = document.getElementById('image-preview');
+    const imagePreviewImg = document.getElementById('image-preview-img');
+    const imageName = document.getElementById('image-name');
+    const clearImageBtn = document.getElementById('clear-image-btn');
+
+    imageInput.addEventListener('change', function () {
+        const file = this.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                imagePreviewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+                imageName.textContent = '📁 ' + file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)';
+            };
+
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.style.display = 'none';
+            imageName.textContent = '';
+        }
+    });
+
+    clearImageBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        imageInput.value = '';
+        imagePreview.style.display = 'none';
+        imageName.textContent = '';
+    });
+})();
+</script>
 </body>
 </html>

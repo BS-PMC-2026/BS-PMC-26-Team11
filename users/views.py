@@ -17,6 +17,7 @@ from .models import User, Package, CartItem, Discount
 from .cancellation import assert_cancellation_window_open, cancellation_deadline, is_cancellation_window_open
 from .exceptions import TimeExpired
 from .reservations import release_expired_reservations
+from .email import send_package_cancellation_email
 
 
 def is_strong_password(password):
@@ -304,25 +305,154 @@ def cart_view(request):
     if not user:
         return redirect('home')
 
-    cart_context = _build_cart_context(user)
+    is_admin = _is_admin(user)
     now = timezone.now()
     orders = []
-    for item_data in cart_context['cart_items']:
-        item = item_data['item']
-        orders.append({
-            'item': item,
-            'cancelable': is_cancellation_window_open(item.reserved_at, now=now),
-            'cancel_until': cancellation_deadline(item.reserved_at),
-        })
+
+    if is_admin:
+        all_items = CartItem.objects.select_related('package', 'user').all()
+        orders_by_user = {}
+        for item in all_items:
+            user_key = item.user.full_name
+            if user_key not in orders_by_user:
+                orders_by_user[user_key] = []
+            orders_by_user[user_key].append({
+                'item': item,
+                'user': item.user,
+                'cancelable': is_cancellation_window_open(item.reserved_at, now=now),
+                'cancel_until': cancellation_deadline(item.reserved_at),
+            })
+        orders = orders_by_user
+        cart_context = {
+            'cart_items': [],
+            'cart_total': Decimal('0.00'),
+            'cart_count': 0,
+            'user_role': 'admin',
+        }
+    else:
+        cart_context = _build_cart_context(user)
+        for item_data in cart_context['cart_items']:
+            item = item_data['item']
+            orders.append({
+                'item': item,
+                'cancelable': is_cancellation_window_open(item.reserved_at, now=now),
+                'cancel_until': cancellation_deadline(item.reserved_at),
+            })
 
     path = request.path.rstrip('/')
-    page_heading = 'ההזמנות שלי' if path.endswith('my-orders') else 'עגלתי'
+    page_heading = 'הזמנות של משתמשים' if is_admin else ('ההזמנות שלי' if path.endswith('my-orders') else 'עגלתי')
 
     return render(request, 'users/cart.html', {
         'orders': orders,
         'full_name': user.full_name,
         'page_heading': page_heading,
+        'is_admin': is_admin,
         **cart_context,
+    })
+
+
+def edit_package(request, package_id):
+    user = _get_logged_in_user(request)
+    if not _is_admin(user):
+        return redirect('home')
+
+    package = get_object_or_404(Package, id=package_id)
+    error_message = None
+    success_message = request.GET.get('success')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        price = request.POST.get('price', '').strip()
+        package_type = request.POST.get('package_type', '').strip()
+        farm_area = request.POST.get('farm_area', '').strip()
+        image = request.FILES.get('image')
+        capacity = request.POST.get('capacity', '0').strip()
+        reservation_minutes = request.POST.get('reservation_minutes', '15').strip()
+
+        if not name:
+            error_message = 'שם החבילה חובה.'
+        elif not price:
+            error_message = 'מחיר חובה.'
+        else:
+            try:
+                price_value = Decimal(price)
+                capacity_value = int(capacity) if capacity else 0
+                reservation_value = int(reservation_minutes) if reservation_minutes else 15
+
+                if reservation_value < 1 or reservation_value > 10080:
+                    error_message = 'זמן שמירה חייב להיות בין 1 ל-10080 דקות.'
+                else:
+                    package.name = name
+                    package.description = description
+                    package.price = price_value
+                    package.package_type = package_type
+                    package.farm_area = farm_area
+                    package.capacity = capacity_value
+                    package.reservation_minutes = reservation_value
+                    if image:
+                        package.image = image
+                    package.save()
+                    return redirect(f"{reverse('edit_package', kwargs={'package_id': package_id})}?success=updated")
+            except (InvalidOperation, ValueError):
+                error_message = 'ערכים לא תקינים.'
+
+    active_discount = package.get_active_discount()
+
+    return render(request, 'users/edit_package.html', {
+        'package': package,
+        'full_name': user.full_name,
+        'error_message': error_message,
+        'success_message': success_message,
+        'active_discount': active_discount,
+    })
+
+
+def admin_packages(request):
+    user = _get_logged_in_user(request)
+    if not _is_admin(user):
+        return redirect('home')
+
+    packages = Package.objects.all().order_by('id')
+    error_message = None
+    success_message = request.GET.get('success')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        price = request.POST.get('price', '').strip()
+        package_type = request.POST.get('package_type', '').strip()
+        farm_area = request.POST.get('farm_area', '').strip()
+        image = request.FILES.get('image')
+        capacity = request.POST.get('capacity', '0').strip()
+
+        if not name:
+            error_message = 'שם החבילה חובה.'
+        elif not price:
+            error_message = 'מחיר חובה.'
+        else:
+            try:
+                price_value = Decimal(price)
+                capacity_value = int(capacity) if capacity else 0
+
+                Package.objects.create(
+                    name=name,
+                    description=description,
+                    price=price_value,
+                    package_type=package_type,
+                    farm_area=farm_area,
+                    image=image,
+                    capacity=capacity_value,
+                )
+                return redirect(f"{reverse('admin_packages_view')}?success=added")
+            except (InvalidOperation, ValueError):
+                error_message = 'ערכים לא תקינים.'
+
+    return render(request, 'users/admin_packages.html', {
+        'packages': packages,
+        'full_name': user.full_name,
+        'error_message': error_message,
+        'success_message': success_message,
     })
 
 
@@ -461,10 +591,25 @@ def cancel_user_package(request, order_id):
 
     order.status = 'Cancelled'
     order.save()
-    return JsonResponse({'status': 'cancelled', 'id': order.id})
+
+    try:
+        send_package_cancellation_email(user, order.package_name)
+    except Exception:
+        pass
+
+    cart_context = _build_cart_context(user)
+    return JsonResponse({
+        'status': 'cancelled',
+        'id': order.id,
+        'cart_total': float(cart_context['cart_total']),
+        'cart_count': cart_context['cart_count'],
+    })
 
 
 def login_view(request):
+    if request.method == 'GET':
+        return render(request, 'users/login.html')
+
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
@@ -508,7 +653,24 @@ def login_view(request):
         request.session['full_name'] = user.full_name
 
         if user.role == 'admin':
-            return redirect('promotions')
+            return redirect('admin_dashboard')
         return redirect('packages')
+
+
+def admin_dashboard(request):
+    user = _get_logged_in_user(request)
+    if not user or user.role != 'admin':
+        return redirect('home')
+
+    total_orders = CartItem.objects.filter(status='Reserved').count()
+    total_users = User.objects.filter(role='user').count()
+    total_packages = Package.objects.count()
+
+    return render(request, 'users/admin_dashboard.html', {
+        'full_name': user.full_name,
+        'total_orders': total_orders,
+        'total_users': total_users,
+        'total_packages': total_packages,
+    })
 
     return render(request, 'users/login.html')

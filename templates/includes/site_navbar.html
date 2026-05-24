@@ -332,10 +332,17 @@
         </a>
 
         <nav class="site-navbar__links" aria-label="ניווט ראשי">
-            <a href="{% url 'home' %}" data-nav-key="home" class="{% if active_nav == 'home' %}is-active{% endif %}">דף הבית</a>
-            <a href="{% url 'packages' %}" data-nav-key="tours" class="{% if active_nav == 'tours' %}is-active{% endif %}">סיורים</a>
-            <a href="{% url 'home' %}#gallery" data-nav-key="gallery" class="{% if active_nav == 'gallery' %}is-active{% endif %}">גלריה</a>
-            <a href="{% url 'home' %}#about" data-nav-key="about" class="{% if active_nav == 'about' %}is-active{% endif %}">אודות</a>
+            {% if user_role == 'admin' %}
+                <a href="{% url 'home' %}" data-nav-key="home" class="{% if active_nav == 'home' %}is-active{% endif %}">דף הבית</a>
+                <a href="{% url 'admin_dashboard' %}" data-nav-key="admin" class="{% if active_nav == 'admin' %}is-active{% endif %}">לוח בקרה</a>
+                <a href="{% url 'package_reservation_admin' %}" data-nav-key="reservations" class="{% if active_nav == 'reservations' %}is-active{% endif %}">זמן שמירה</a>
+                <a href="{% url 'promotions' %}" data-nav-key="promotions" class="{% if active_nav == 'promotions' %}is-active{% endif %}">מבצעים</a>
+            {% else %}
+                <a href="{% url 'home' %}" data-nav-key="home" class="{% if active_nav == 'home' %}is-active{% endif %}">דף הבית</a>
+                <a href="{% url 'packages' %}" data-nav-key="tours" class="{% if active_nav == 'tours' %}is-active{% endif %}">סיורים</a>
+                <a href="{% url 'home' %}#gallery" data-nav-key="gallery" class="{% if active_nav == 'gallery' %}is-active{% endif %}">גלריה</a>
+                <a href="{% url 'home' %}#about" data-nav-key="about" class="{% if active_nav == 'about' %}is-active{% endif %}">אודות</a>
+            {% endif %}
         </nav>
 
         <div class="site-navbar__actions">
@@ -348,12 +355,14 @@
                     {% else %}משתמש{% endif %}
                 </span>
 
-                <button type="button" class="site-navbar__cart" data-cart-open aria-label="פתיחת סל הקניות">
-                    <span>🛒</span>
-                    {% if cart_count > 0 %}
-                        <span class="site-navbar__badge">{{ cart_count }}</span>
-                    {% endif %}
-                </button>
+                {% if user_role != 'admin' %}
+                    <button type="button" class="site-navbar__cart" data-cart-open aria-label="פתיחת סל הקניות">
+                        <span>🛒</span>
+                        {% if cart_count > 0 %}
+                            <span class="site-navbar__badge">{{ cart_count }}</span>
+                        {% endif %}
+                    </button>
+                {% endif %}
 
                 <a href="{% url 'logout' %}" class="site-navbar__logout">התנתקות</a>
             {% else %}

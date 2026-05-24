@@ -25,6 +25,7 @@ class Package(models.Model):
     package_type = models.CharField(max_length=80)
     farm_area = models.CharField(max_length=80)
     image_url = models.URLField(blank=True)
+    image = models.ImageField(upload_to='packages/', blank=True, null=True)
     capacity = models.PositiveIntegerField(default=0)
     is_available = models.BooleanField(default=True)
     reservation_minutes = models.PositiveIntegerField(
