@@ -310,7 +310,7 @@ def cart_view(request):
     orders = []
 
     if is_admin:
-        all_items = CartItem.objects.select_related('package', 'user').all()
+        all_items = CartItem.objects.select_related('package', 'user').filter(user__role='user')
         orders_by_user = {}
         for item in all_items:
             user_key = item.user.full_name
