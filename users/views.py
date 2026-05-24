@@ -270,12 +270,36 @@ def cart_view(request):
     now = timezone.now()
     reserved_items = CartItem.objects.filter(user=user, status='Reserved', expires_at__gt=now).select_related('package')
     orders = []
-    for item in reserved_items:
-        orders.append({
-            'item': item,
-            'cancelable': is_cancellation_window_open(item.reserved_at, now=now),
-            'cancel_until': cancellation_deadline(item.reserved_at),
-        })
+
+    if is_admin:
+        all_items = CartItem.objects.select_related('package', 'user').filter(user__role='user')
+        orders_by_user = {}
+        for item in all_items:
+            user_key = item.user.full_name
+            if user_key not in orders_by_user:
+                orders_by_user[user_key] = []
+            orders_by_user[user_key].append({
+                'item': item,
+                'user': item.user,
+                'cancelable': is_cancellation_window_open(item.reserved_at, now=now),
+                'cancel_until': cancellation_deadline(item.reserved_at),
+            })
+        orders = orders_by_user
+        cart_context = {
+            'cart_items': [],
+            'cart_total': Decimal('0.00'),
+            'cart_count': 0,
+            'user_role': 'admin',
+        }
+    else:
+        cart_context = _build_cart_context(user)
+        for item_data in cart_context['cart_items']:
+            item = item_data['item']
+            orders.append({
+                'item': item,
+                'cancelable': is_cancellation_window_open(item.reserved_at, now=now),
+                'cancel_until': cancellation_deadline(item.reserved_at),
+            })
 
     path = request.path.rstrip('/')
     page_heading = 'ההזמנות שלי' if path.endswith('my-orders') else 'עגלתי'
