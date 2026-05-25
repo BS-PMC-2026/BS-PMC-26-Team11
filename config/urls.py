@@ -12,6 +12,10 @@ from users.views import (
     promotion_management,
     cancel_user_package,
     package_reservation_admin,
+    admin_dashboard,
+    admin_packages,
+    edit_package,
+    delete_package,
 )
 
 def signup_success(request):
@@ -25,6 +29,10 @@ urlpatterns = [
     path('packages/<int:package_id>/add/', add_to_cart, name='add_to_cart'),
     path('my-orders/', cart_view, name='my_orders'),
     path('cart/', cart_view, name='cart'),
+    path('admin/dashboard/', admin_dashboard, name='admin_dashboard'),
+    path('admin/packages/', admin_packages, name='admin_packages_view'),
+    path('admin/packages/<int:package_id>/edit/', edit_package, name='edit_package'),
+    path('admin/packages/<int:package_id>/delete/', delete_package, name='delete_package'),
     path('admin/package-reservations/', package_reservation_admin, name='package_reservation_admin'),
     path('admin/promotions/', promotion_management, name='promotions'),
     path('admin/', admin.site.urls),
