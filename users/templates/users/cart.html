@@ -55,7 +55,70 @@
     <div class="content">
         <div class="cart-container">
             {% if orders %}
-                <table class="cart-table">
+                {% for user_name, user_orders in orders.items %}
+                    <div class="user-section">
+                        <div class="user-section-title">👤 {{ user_name }}</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>📦 שם החבילה</th>
+                                    <th>💰 מחיר</th>
+                                    <th>📅 התחלת שמירה</th>
+                                    <th>⏰ תפוגת שמירה</th>
+                                    <th>⚙️ פעולה</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item_data in user_orders %}
+                                    <tr id="cart-item-{{ item_data.item.id }}">
+                                        <td>{{ item_data.item.package_name }}</td>
+                                        <td>₪{{ item_data.item.package.price }}</td>
+                                        <td>{{ item_data.item.reserved_at|date:"d/m H:i" }}</td>
+                                        <td>{{ item_data.item.expires_at|date:"d/m H:i" }}</td>
+                                       <td>
+                                         {% if item_data.item.status == 'Reserved' %}
+                                              <div class="order-info">
+                                                  שמירה: {{ item_data.item.package.reservation_minutes }} דקות
+                                              </div>
+
+                                             {% if item_data.cancelable %}
+                                                <button class="btn-secondary cancel-button"
+                                                        data-item-id="{{ item_data.item.id }}">
+                                                   ביטול
+                                                 </button>
+                                            {% else %}
+                                                 <span style="color: var(--muted);">
+                                                      חלון ביטול עבר
+                                                 </span>
+                                           {% endif %}
+
+                                        {% elif item_data.item.status == 'Cancelled' %}
+                                                <span style="color: #d71920; font-weight: 700;">
+                                                           בוטל
+                                                 </span>
+
+                                        {% else %}
+                                           <span style="color: var(--muted); font-weight: 700;">
+                                               {{ item_data.item.status }}
+                                            </span>
+                                          {% endif %}
+                                         </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+                <div id="cancel-message" class="cancel-message"></div>
+            {% else %}
+                <div class="cart-empty">
+                    <p>אין הזמנות במערכת</p>
+                    <p>לא נמצאו הזמנות פעילות כרגע.</p>
+                </div>
+            {% endif %}
+        {% else %}
+            {% if orders %}
+                <table>
                     <thead>
                         <tr>
                             <th>שם החבילה</th>

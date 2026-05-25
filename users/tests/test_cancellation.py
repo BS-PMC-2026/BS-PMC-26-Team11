@@ -38,3 +38,14 @@ class CancellationWindowUnitTests(TestCase):
         created = timezone.now()
         deadline = cancellation_deadline(created)
         self.assertEqual(deadline, created + timedelta(minutes=15))
+    def test_admin_can_cancel_after_deadline(self):
+      now = timezone.now()
+      created_at = now - timedelta(days=35)
+
+      result = assert_cancellation_window_open(
+        created_at,
+        now=now,
+        is_admin=True
+        )
+
+      self.assertTrue(result)
