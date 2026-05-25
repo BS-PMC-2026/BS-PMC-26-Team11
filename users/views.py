@@ -578,14 +578,22 @@ def cancel_user_package(request, order_id):
     except CartItem.DoesNotExist:
         return JsonResponse({'error': 'not_found'}, status=404)
 
-    if order.user_id != user.id:
+    is_admin = user.role == 'admin'
+
+    # Regular users can cancel only their own package.
+    # Admin can cancel any user's package.
+    if not is_admin and order.user_id != user.id:
         return JsonResponse({'error': 'forbidden'}, status=403)
 
     if order.status != 'Reserved':
         return JsonResponse({'error': 'already_cancelled'}, status=400)
 
     try:
-        assert_cancellation_window_open(order.reserved_at)
+        # Admin ignores the time limit.
+        assert_cancellation_window_open(
+            order.reserved_at,
+            is_admin=is_admin
+        )
     except TimeExpired:
         return JsonResponse({'error': 'TimeExpired'}, status=400)
 
@@ -593,11 +601,13 @@ def cancel_user_package(request, order_id):
     order.save()
 
     try:
-        send_package_cancellation_email(user, order.package_name)
+        # Send email to the user who owns the order, not necessarily the admin.
+        send_package_cancellation_email(order.user, order.package_name)
     except Exception:
         pass
 
     cart_context = _build_cart_context(user)
+
     return JsonResponse({
         'status': 'cancelled',
         'id': order.id,
