@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            direction: rtl;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+        .header {
+            background: #d71920;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .package-name {
+            font-weight: bold;
+            color: #d71920;
+            font-size: 18px;
+        }
+        .footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ביטול הזמנה</h1>
+        </div>
+        <div class="content">
+            <p>שלום {{ user_name }},</p>
+            <p>אנחנו מאשרים כי ההזמנה שלך לסיור/פעילות <span class="package-name">{{ package_name }}</span> בוטלה בהצלחה.</p>
+            <p>אם בוטלת את ההזמנה בתוך חלון הביטול המותר, הכספים שלך יוחזרו לחשבונך בקרוב.</p>
+            <p>אם יש לך שאלות או זקוקה לסיוע נוסף, אנא צור קשר עם צוות החוות שלנו.</p>
+            <p>תודה שבחרת בחוות החריף!</p>
+
+            <div class="footer">
+                <p>© 2026 חוות החריף. כל הזכויות שמורות.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

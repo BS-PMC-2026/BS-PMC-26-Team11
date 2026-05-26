@@ -16,17 +16,16 @@ class User(models.Model):
 
     def __str__(self):
         return self.full_name
-#jkkknkkjkjjkj
 
 
 class Package(models.Model):
-    
     name = models.CharField(max_length=120)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
     package_type = models.CharField(max_length=80)
     farm_area = models.CharField(max_length=80)
     image_url = models.URLField(blank=True)
+    image = models.ImageField(upload_to='packages/', blank=True, null=True)
     capacity = models.PositiveIntegerField(default=0)
     is_available = models.BooleanField(default=True)
     reservation_minutes = models.PositiveIntegerField(

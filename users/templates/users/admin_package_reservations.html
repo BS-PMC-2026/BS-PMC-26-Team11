@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <title>הגדרת זמן שמירה בעגלה</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
@@ -93,6 +94,333 @@
                 </div>
             </form>
         </div>
+=======
+    <title>זמן שמירה בעגלה - חוות החריף</title>
+    <style>
+        :root {
+            --red: #d71920;
+            --red-dark: #b9151b;
+            --text: #171717;
+            --muted: #6f6f6f;
+            --border: #ececec;
+            --soft: #fafafa;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { min-height: 100vh; background: #fff; color: var(--text); direction: rtl; }
+        a { color: inherit; text-decoration: none; }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            height: 76px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 18px rgba(20,20,20,0.06);
+        }
+
+        .navbar-inner {
+            width: min(1180px, 94%);
+            height: 100%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #151515;
+            font-size: 22px;
+            font-weight: 900;
+            text-decoration: none;
+        }
+
+        .navbar-brand-flame {
+            width: 30px;
+            height: 30px;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 30px;
+            flex: 1;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .navbar-nav a {
+            color: #303030;
+            transition: 0.25s;
+            padding: 8px 14px;
+            border-radius: 999px;
+        }
+
+        .navbar-nav a:hover,
+        .navbar-nav a.active {
+            background: #ffe6ea;
+            color: var(--red);
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .user-name {
+            color: #151515;
+            font-weight: 800;
+        }
+
+        .logout-btn {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 0;
+            background: transparent;
+            color: #303030;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.25s;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background: #ffe6ea;
+            color: var(--red);
+        }
+
+        .container {
+            width: min(1180px, 94%);
+            margin: 0 auto;
+            padding: 64px 0;
+        }
+
+        .header {
+            margin-bottom: 46px;
+        }
+
+        .header h1 {
+            font-size: 44px;
+            font-weight: 900;
+            margin-bottom: 12px;
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 18px;
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 900;
+            margin-bottom: 14px;
+            color: var(--text);
+        }
+
+        .hint {
+            font-size: 15px;
+            color: var(--muted);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .message {
+            padding: 14px 18px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .message.success {
+            background: #f2fff2;
+            border: 1px solid #bde8bb;
+            color: #216d24;
+        }
+
+        .message.error {
+            background: #fff4f3;
+            border: 1px solid #f0b7b0;
+            color: #a31911;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+            text-align: right;
+        }
+
+        th {
+            background: var(--soft);
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        td {
+            font-size: 15px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-wrapper input {
+            direction: ltr;
+            text-align: center;
+            width: 120px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(215,25,32,0.1);
+        }
+
+        .submit-row {
+            margin-top: 32px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .submit-btn {
+            border: none;
+            color: #fff;
+            background: var(--red);
+            border-radius: 14px;
+            padding: 12px 24px;
+            font-weight: 900;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            background: var(--red-dark);
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 1150px) {
+            .navbar-nav { display: none; }
+            .header h1 { font-size: 34px; }
+            .panel { padding: 24px; }
+        }
+
+        @media (max-width: 640px) {
+            table { font-size: 14px; }
+            th, td { padding: 10px 8px; }
+            .input-wrapper input { width: 100px; }
+            .container { padding: 40px 0; }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a href="{% url 'home' %}" class="navbar-brand">
+            <span>הדינרים</span>
+            <svg class="navbar-brand-flame" viewBox="0 0 64 64" aria-hidden="true">
+                <path d="M36.8 5.5C39.8 17 55 21.8 55 39.2C55 51.7 44.8 60 32.1 60C19.3 60 9 51.8 9 39.1C9 28.5 15.1 21.2 22.4 14.4C21.7 23.2 27 27.2 31.2 28.9C30.2 18.9 33.1 10.8 36.8 5.5Z"
+                      fill="none" stroke="#d71920" stroke-width="6"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+
+        <div class="navbar-nav">
+            <a href="{% url 'home' %}">דף הבית</a>
+            <a href="{% url 'admin_dashboard' %}">לוח בקרה</a>
+            <a href="{% url 'package_reservation_admin' %}" class="active">זמן שמירה</a>
+            <a href="{% url 'promotions' %}">מבצעים</a>
+        </div>
+
+        <div class="navbar-actions">
+            <span class="user-name">{{ full_name }}</span>
+            <a href="{% url 'logout' %}" class="logout-btn">התנתקות</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <h1>הגדרת זמן שמירה בעגלה</h1>
+        <p>ניהול משך זמן השמירה של כל חבילה בעגלה הקניות</p>
+    </div>
+
+    <div class="panel">
+        {% if success_message == 'saved' %}
+            <div class="message success">✓ ההגדרות נשמרו בהצלחה.</div>
+        {% endif %}
+        {% if error_message %}
+            <div class="message error">✗ {{ error_message }}</div>
+        {% endif %}
+
+        <div class="section-title">הגדרת זמן שמירה לכל חבילה</div>
+        <p class="hint">
+            הזן את משך הזמן בדקות (בין 1 ל־10080 דקות). כשמשתמש מוסיף חבילה לעגלה, היא תישמר לפי משך הזמן שנקבע.
+            אם לא יסיים את הרכישה בזמן, ההזמנה תתבוטל אוטומטית.
+        </p>
+
+        <form method="post" action="{% url 'package_reservation_admin' %}">
+            {% csrf_token %}
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">📦 שם החבילה</th>
+                        <th style="width: 50%;">⏱️ זמן שמירה (דקות)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for package in packages %}
+                        <tr>
+                            <td>{{ package.name }}</td>
+                            <td>
+                                <div class="input-wrapper">
+                                    <input
+                                        type="number"
+                                        name="reservation_minutes_{{ package.id }}"
+                                        min="1"
+                                        max="10080"
+                                        step="1"
+                                        value="{{ package.reservation_minutes }}"
+                                        required
+                                        inputmode="numeric"
+                                    />
+                                    <span style="color: var(--muted); font-size: 13px;">דקות</span>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="submit-row">
+                <button type="submit" class="submit-btn">💾 שמור הגדרות</button>
+            </div>
+        </form>
+>>>>>>> origin/Shahed_hackton
     </div>
 </div>
 </body>

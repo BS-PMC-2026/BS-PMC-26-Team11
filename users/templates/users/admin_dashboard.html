@@ -1,0 +1,294 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>לוח בקרה - חוות החריף</title>
+    <style>
+        :root {
+            --red: #d71920;
+            --red-dark: #b9151b;
+            --text: #171717;
+            --muted: #6f6f6f;
+            --border: #ececec;
+            --soft: #fafafa;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { min-height: 100vh; background: #fff; color: var(--text); direction: rtl; }
+        a { color: inherit; text-decoration: none; }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            height: 76px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 18px rgba(20,20,20,0.06);
+        }
+
+        .navbar-inner {
+            width: min(1180px, 94%);
+            height: 100%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #151515;
+            font-size: 22px;
+            font-weight: 900;
+            text-decoration: none;
+        }
+
+        .navbar-brand-flame {
+            width: 30px;
+            height: 30px;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 30px;
+            flex: 1;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .navbar-nav a {
+            color: #303030;
+            transition: 0.25s;
+            padding: 8px 14px;
+            border-radius: 999px;
+        }
+
+        .navbar-nav a:hover {
+            background: #ffe6ea;
+            color: var(--red);
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .user-name {
+            color: #151515;
+            font-weight: 800;
+        }
+
+        .logout-btn {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 0;
+            background: transparent;
+            color: #303030;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.25s;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background: #ffe6ea;
+            color: var(--red);
+        }
+
+        .container {
+            width: min(1180px, 94%);
+            margin: 0 auto;
+            padding: 64px 0;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .header h1 {
+            font-size: 44px;
+            font-weight: 900;
+            margin-bottom: 12px;
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 18px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 64px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--red);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 16px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .menu-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .menu-card:hover {
+            box-shadow: 0 14px 40px rgba(215,25,32,0.15);
+            transform: translateY(-4px);
+        }
+
+        .menu-icon {
+            font-size: 48px;
+            min-width: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-content h3 {
+            font-size: 20px;
+            font-weight: 900;
+            margin-bottom: 6px;
+        }
+
+        .menu-content p {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 1150px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .menu-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .navbar-nav { display: none; }
+            .header h1 { font-size: 34px; }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a href="{% url 'home' %}" class="navbar-brand">
+            <span>הדינרים</span>
+            <svg class="navbar-brand-flame" viewBox="0 0 64 64" aria-hidden="true">
+                <path d="M36.8 5.5C39.8 17 55 21.8 55 39.2C55 51.7 44.8 60 32.1 60C19.3 60 9 51.8 9 39.1C9 28.5 15.1 21.2 22.4 14.4C21.7 23.2 27 27.2 31.2 28.9C30.2 18.9 33.1 10.8 36.8 5.5Z"
+                      fill="none" stroke="#d71920" stroke-width="6"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+
+        <div class="navbar-nav">
+            <a href="{% url 'home' %}">דף הבית</a>
+            <a href="{% url 'admin_dashboard' %}">לוח בקרה</a>
+            <a href="{% url 'package_reservation_admin' %}">זמן שמירה בעגלה</a>
+            <a href="{% url 'promotions' %}">הגדרת מבצעים</a>
+        </div>
+
+        <div class="navbar-actions">
+            <span class="user-name">{{ full_name }}</span>
+            <a href="{% url 'logout' %}" class="logout-btn">התנתקות</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <h1>לוח בקרה</h1>
+        <p>ניהול ושליטה בחוות החריף</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_packages }}</div>
+            <div class="stat-label">חבילות זמינות</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_users }}</div>
+            <div class="stat-label">משתמשים רשומים</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_orders }}</div>
+            <div class="stat-label">הזמנות פעילות</div>
+        </div>
+    </div>
+
+    <div class="menu-grid">
+        <a href="{% url 'package_reservation_admin' %}" class="menu-card">
+            <div class="menu-icon">⏱️</div>
+            <div class="menu-content">
+                <h3>זמן שמירה בעגלה</h3>
+                <p>ניהול זמני השמירה של החבילות בעגלה</p>
+            </div>
+        </a>
+
+        <a href="{% url 'promotions' %}" class="menu-card">
+            <div class="menu-icon">🎁</div>
+            <div class="menu-content">
+                <h3>הגדרת מבצעים</h3>
+                <p>יצירה וניהול של מבצעים והנחות</p>
+            </div>
+        </a>
+
+        <a href="{% url 'admin_packages_view' %}" class="menu-card">
+            <div class="menu-icon">📦</div>
+            <div class="menu-content">
+                <h3>רשימת חבילות</h3>
+                <p>ניהול וצפייה בכל החבילות הזמינות</p>
+            </div>
+        </a>
+
+        <a href="{% url 'my_orders' %}" class="menu-card">
+            <div class="menu-icon">📋</div>
+            <div class="menu-content">
+                <h3>הזמנות של המשתמשים</h3>
+                <p>צפייה בהזמנות ופעולות פעילות של כל המשתמשים</p>
+            </div>
+        </a>
+    </div>
+</div>
+</body>
+</html>

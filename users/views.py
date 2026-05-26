@@ -2,7 +2,6 @@
 import re
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
-from django.db import transaction
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
@@ -18,7 +17,6 @@ from .cancellation import assert_cancellation_window_open, cancellation_deadline
 from .exceptions import TimeExpired
 from .reservations import release_expired_reservations
 from .email import send_package_cancellation_email
-from django.contrib import messages
 
 def is_strong_password(password):
     if len(password) < 8:
@@ -50,60 +48,69 @@ def signup_view(request):
         phone = request.POST.get('phone', '').strip()
         password = request.POST.get('password', '')
         confirm_password = request.POST.get('confirm_password', '')
+        form_data = {
+            'full_name': full_name,
+            'email': email,
+            'phone': phone,
+        }
+        field_errors = {}
 
-        if not full_name or not email or not phone or not password or not confirm_password:
+        if not full_name:
+            field_errors['full_name'] = 'יש להזין שם מלא.'
+        if not email:
+            field_errors['email'] = 'יש להזין אימייל.'
+        if not phone:
+            field_errors['phone'] = 'יש להזין מספר טלפון.'
+        if not password:
+            field_errors['password'] = 'יש להזין סיסמה.'
+        if not confirm_password:
+            field_errors['confirm_password'] = 'יש להזין אימות סיסמה.'
+
+        if field_errors:
             return render(request, 'users/signup.html', {
-                'error': 'All fields are required.',
-                'full_name': full_name,
-                'email': email,
-                'phone': phone,
+                'error': 'יש למלא את כל שדות החובה.',
+                'field_errors': field_errors,
+                **form_data,
             })
 
-
-
-# בדיקת טלפון
+        # בדיקת טלפון
         if not re.fullmatch(r'05\d{8}', phone):
-           return render(request, 'users/signup.html', {
-        'error': 'מספר טלפון חייב להכיל 10 ספרות ולהתחיל ב- 05 ',
-        'full_name': full_name,
-        'email': email,
-        'phone': phone,
-           })
+            return render(request, 'users/signup.html', {
+                'error': 'מספר טלפון חייב להכיל 10 ספרות ולהתחיל ב-05.',
+                'field_errors': {'phone': 'מספר טלפון חייב להכיל 10 ספרות ולהתחיל ב-05.'},
+                **form_data,
+            })
 
 
         try:
             validate_email(email)
         except ValidationError:
             return render(request, 'users/signup.html', {
-                'error': 'Invalid email format.',
-                'full_name': full_name,
-                'email': email,
-                'phone': phone,
+                'error': 'פורמט האימייל אינו תקין.',
+                'field_errors': {'email': 'יש להזין אימייל בפורמט תקין.'},
+                **form_data,
             })
 
         if User.objects.filter(email=email).exists():
             return render(request, 'users/signup.html', {
-                'error': 'Email already exists.',
-                'full_name': full_name,
-                'email': email,
-                'phone': phone,
+                'error': 'האימייל כבר קיים במערכת.',
+                'field_errors': {'email': 'האימייל כבר קיים במערכת.'},
+                **form_data,
             })
 
         if password != confirm_password:
             return render(request, 'users/signup.html', {
-                'error': 'Passwords do not match.',
-                'full_name': full_name,
-                'email': email,
-                'phone': phone,
+                'error': 'הסיסמאות אינן תואמות.',
+                'field_errors': {'confirm_password': 'הסיסמאות אינן תואמות.'},
+                **form_data,
             })
 
         is_valid, message = is_strong_password(password)
         if not is_valid:
             return render(request, 'users/signup.html', {
                 'error': message,
-                'full_name': full_name,
-                'email': email,
-                'phone': phone,
+                'field_errors': {'password': message},
+                **form_data,
             })
 
         role = 'admin' if User.objects.count() == 0 else 'user'
@@ -113,7 +120,7 @@ def signup_view(request):
             email=email,
             password=make_password(password),
             phone=phone,
-            role='user'
+            role=role
         )
 
         return redirect('signup_success')
@@ -171,15 +178,13 @@ def package_reservation_admin(request):
 
 @never_cache
 def home_page(request):
-    if not request.session.get('user_id'):
-        return redirect('home')
-
     user = _get_logged_in_user(request)
-    full_name = request.session.get('full_name', 'User')
     user_role = user.role if user else 'user'
+    cart_context = _build_cart_context(user)
     response = render(request, 'home.html', {
-        'full_name': full_name,
         'user_role': user_role,
+        'is_authenticated': user is not None,
+        **cart_context,
     })
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
     response['Pragma'] = 'no-cache'
@@ -201,24 +206,55 @@ def _is_admin(user):
     return user is not None and user.role == 'admin'
 
 
-def package_list(request):
-    user = _get_logged_in_user(request)
+def _build_cart_context(user):
     if not user:
-        return redirect('home')
+        return {
+            'cart_items': [],
+            'cart_count': 0,
+            'cart_total': 0,
+        }
 
     release_expired_reservations()
-    packages = Package.objects.filter(is_available=True)
+    now = timezone.now()
+    active_items = CartItem.objects.filter(
+        user=user,
+        status='Reserved',
+        expires_at__gt=now,
+    ).select_related('package')
+    cart_items = []
+    total = 0
+    for item in active_items:
+        price = item.package.get_discounted_price() or item.package.price
+        total += price
+        cart_items.append({
+            'item': item,
+            'price': price,
+            'quantity': 1,
+        })
+    return {
+        'cart_items': cart_items,
+        'cart_count': len(cart_items),
+        'cart_total': total,
+    }
+
+
+def package_list(request):
+    user = _get_logged_in_user(request)
+    packages = Package.objects.all().order_by('id')
     success_message = request.GET.get('success')
     error_message = request.GET.get('error')
     reserved_minutes = request.GET.get('minutes')
+    cart_context = _build_cart_context(user)
 
     return render(request, 'users/packages.html', {
         'packages': packages,
-        'full_name': user.full_name,
-        'user_role': user.role,
+        'full_name': user.full_name if user else '',
+        'user_role': user.role if user else 'guest',
+        'is_authenticated': user is not None,
         'success_message': success_message,
         'error_message': error_message,
         'reserved_minutes': reserved_minutes,
+        **cart_context,
     })
 
 
@@ -267,9 +303,8 @@ def cart_view(request):
     if not user:
         return redirect('home')
 
-    release_expired_reservations()
+    is_admin = _is_admin(user)
     now = timezone.now()
-    reserved_items = CartItem.objects.filter(user=user, status='Reserved', expires_at__gt=now).select_related('package')
     orders = []
 
     if is_admin:
@@ -303,13 +338,119 @@ def cart_view(request):
             })
 
     path = request.path.rstrip('/')
-    page_heading = 'ההזמנות שלי' if path.endswith('my-orders') else 'עגלתי'
+    page_heading = 'הזמנות של משתמשים' if is_admin else ('ההזמנות שלי' if path.endswith('my-orders') else 'עגלתי')
 
     return render(request, 'users/cart.html', {
         'orders': orders,
         'full_name': user.full_name,
-        'cart_count': len(orders),
         'page_heading': page_heading,
+        'is_admin': is_admin,
+        **cart_context,
+    })
+
+
+def edit_package(request, package_id):
+    user = _get_logged_in_user(request)
+    if not _is_admin(user):
+        return redirect('home')
+
+    package = get_object_or_404(Package, id=package_id)
+    error_message = None
+    success_message = request.GET.get('success')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        price = request.POST.get('price', '').strip()
+        package_type = request.POST.get('package_type', '').strip()
+        farm_area = request.POST.get('farm_area', '').strip()
+        image = request.FILES.get('image')
+        capacity = request.POST.get('capacity', '0').strip()
+        reservation_minutes = request.POST.get('reservation_minutes', '15').strip()
+
+        if not name:
+            error_message = 'שם החבילה חובה.'
+        elif not price:
+            error_message = 'מחיר חובה.'
+        else:
+            try:
+                price_value = Decimal(price)
+                capacity_value = int(capacity) if capacity else 0
+                reservation_value = int(reservation_minutes) if reservation_minutes else 15
+
+                if reservation_value < 1 or reservation_value > 10080:
+                    error_message = 'זמן שמירה חייב להיות בין 1 ל-10080 דקות.'
+                else:
+                    package.name = name
+                    package.description = description
+                    package.price = price_value
+                    package.package_type = package_type
+                    package.farm_area = farm_area
+                    package.capacity = capacity_value
+                    package.reservation_minutes = reservation_value
+                    if image:
+                        package.image = image
+                    package.save()
+                    return redirect(f"{reverse('edit_package', kwargs={'package_id': package_id})}?success=updated")
+            except (InvalidOperation, ValueError):
+                error_message = 'ערכים לא תקינים.'
+
+    active_discount = package.get_active_discount()
+
+    return render(request, 'users/edit_package.html', {
+        'package': package,
+        'full_name': user.full_name,
+        'error_message': error_message,
+        'success_message': success_message,
+        'active_discount': active_discount,
+    })
+
+
+def admin_packages(request):
+    user = _get_logged_in_user(request)
+    if not _is_admin(user):
+        return redirect('home')
+
+    packages = Package.objects.all().order_by('id')
+    error_message = None
+    success_message = request.GET.get('success')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        price = request.POST.get('price', '').strip()
+        package_type = request.POST.get('package_type', '').strip()
+        farm_area = request.POST.get('farm_area', '').strip()
+        image = request.FILES.get('image')
+        capacity = request.POST.get('capacity', '0').strip()
+
+        if not name:
+            error_message = 'שם החבילה חובה.'
+        elif not price:
+            error_message = 'מחיר חובה.'
+        else:
+            try:
+                price_value = Decimal(price)
+                capacity_value = int(capacity) if capacity else 0
+
+                Package.objects.create(
+                    name=name,
+                    description=description,
+                    price=price_value,
+                    package_type=package_type,
+                    farm_area=farm_area,
+                    image=image,
+                    capacity=capacity_value,
+                )
+                return redirect(f"{reverse('admin_packages_view')}?success=added")
+            except (InvalidOperation, ValueError):
+                error_message = 'ערכים לא תקינים.'
+
+    return render(request, 'users/admin_packages.html', {
+        'packages': packages,
+        'full_name': user.full_name,
+        'error_message': error_message,
+        'success_message': success_message,
     })
 
 
@@ -435,22 +576,14 @@ def cancel_user_package(request, order_id):
     except CartItem.DoesNotExist:
         return JsonResponse({'error': 'not_found'}, status=404)
 
-    is_admin = user.role == 'admin'
-
-    # Regular users can cancel only their own package.
-    # Admin can cancel any user's package.
-    if not is_admin and order.user_id != user.id:
+    if order.user_id != user.id:
         return JsonResponse({'error': 'forbidden'}, status=403)
 
     if order.status != 'Reserved':
         return JsonResponse({'error': 'already_cancelled'}, status=400)
 
     try:
-        # Admin ignores the time limit.
-        assert_cancellation_window_open(
-            order.reserved_at,
-            is_admin=is_admin
-        )
+        assert_cancellation_window_open(order.reserved_at)
     except TimeExpired:
         return JsonResponse({'error': 'TimeExpired'}, status=400)
 
@@ -458,13 +591,11 @@ def cancel_user_package(request, order_id):
     order.save()
 
     try:
-        # Send email to the user who owns the order, not necessarily the admin.
-        send_package_cancellation_email(order.user, order.package_name)
+        send_package_cancellation_email(user, order.package_name)
     except Exception:
         pass
 
     cart_context = _build_cart_context(user)
-
     return JsonResponse({
         'status': 'cancelled',
         'id': order.id,
@@ -474,21 +605,44 @@ def cancel_user_package(request, order_id):
 
 
 def login_view(request):
+    if request.method == 'GET':
+        return render(request, 'users/login.html')
+
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
+        field_errors = {}
+
+        if not email:
+            field_errors['email'] = 'יש להזין אימייל.'
+        else:
+            try:
+                validate_email(email)
+            except ValidationError:
+                field_errors['email'] = 'יש להזין אימייל בפורמט תקין.'
+        if not password:
+            field_errors['password'] = 'יש להזין סיסמה.'
+
+        if field_errors:
+            return render(request, 'users/login.html', {
+                'error': 'יש לתקן את השדות המסומנים.',
+                'field_errors': field_errors,
+                'email': email,
+            })
 
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return render(request, 'users/login.html', {
                 'error': 'אימייל או סיסמה שגויים.',
+                'field_errors': {'email': 'פרטי ההתחברות אינם נכונים.'},
                 'email': email,
             })
 
         if not check_password(password, user.password):
             return render(request, 'users/login.html', {
                 'error': 'אימייל או סיסמה שגויים.',
+                'field_errors': {'password': 'פרטי ההתחברות אינם נכונים.'},
                 'email': email,
             })
 
@@ -496,33 +650,25 @@ def login_view(request):
         request.session['role'] = user.role
         request.session['full_name'] = user.full_name
 
-        return redirect('home_page')
+        if user.role == 'admin':
+            return redirect('admin_dashboard')
+        return redirect('packages')
+
+
+def admin_dashboard(request):
+    user = _get_logged_in_user(request)
+    if not user or user.role != 'admin':
+        return redirect('home')
+
+    total_orders = CartItem.objects.filter(status='Reserved').count()
+    total_users = User.objects.filter(role='user').count()
+    total_packages = Package.objects.count()
+
+    return render(request, 'users/admin_dashboard.html', {
+        'full_name': user.full_name,
+        'total_orders': total_orders,
+        'total_users': total_users,
+        'total_packages': total_packages,
+    })
 
     return render(request, 'users/login.html')
-from django.http import JsonResponse
-
-def delete_package(request, package_id):
-    user = _get_logged_in_user(request)
-
-    if not user or user.role != 'admin':
-        if request.method == 'DELETE':
-            return JsonResponse({'error': 'forbidden'}, status=403)
-        return redirect('login')
-
-    if request.method not in ['POST', 'DELETE']:
-        return redirect('/admin/packages/')
-
-    package = get_object_or_404(Package, id=package_id)
-
-    with transaction.atomic():
-        if hasattr(package, 'image') and package.image:
-            package.image.delete(save=False)
-
-        package.delete()
-
-    messages.success(request, 'החבילה נמחקה בהצלחה.')
-
-    if request.method == 'DELETE':
-        return JsonResponse({'status': 'deleted', 'id': package_id})
-
-    return redirect('/admin/packages/')

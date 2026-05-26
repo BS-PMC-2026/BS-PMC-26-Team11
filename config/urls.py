@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import render
+from django.conf import settings
+from django.conf.urls.static import static
 from users.views import (
     login_view,
     logout_view,
@@ -15,14 +17,13 @@ from users.views import (
     admin_dashboard,
     admin_packages,
     edit_package,
-    delete_package,
 )
 
 def signup_success(request):
     return render(request, 'signup_success.html')
 
 urlpatterns = [
-    path('', login_view, name='home'),
+    path('', home_page, name='home'),
     path('home/', home_page, name='home_page'),
     path('packages/', package_list, name='packages'),
     path('packages/<int:package_id>/', package_detail, name='package_detail'),
@@ -32,7 +33,6 @@ urlpatterns = [
     path('admin/dashboard/', admin_dashboard, name='admin_dashboard'),
     path('admin/packages/', admin_packages, name='admin_packages_view'),
     path('admin/packages/<int:package_id>/edit/', edit_package, name='edit_package'),
-    path('admin/packages/<int:package_id>/delete/', delete_package, name='delete_package'),
     path('admin/package-reservations/', package_reservation_admin, name='package_reservation_admin'),
     path('admin/promotions/', promotion_management, name='promotions'),
     path('admin/', admin.site.urls),
@@ -41,3 +41,6 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     path('signup-success/', signup_success, name='signup_success'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
