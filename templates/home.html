@@ -4,75 +4,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>דף הבית</title>
+    <title>הדינרים - דף הבית</title>
     <style>
+        :root {
+            --red: #d71920;
+            --red-dark: #b9151b;
+            --pink-soft: #fff1f3;
+            --pink: #ffe4e8;
+            --text: #151515;
+            --muted: #6b6b6b;
+            --border: #eeeeee;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            min-height: 100vh;
-            background:
-                linear-gradient(rgba(15, 15, 15, 0.55), rgba(15, 15, 15, 0.7)),
-                url("{% static 'images/red-peppers.jpg' %}") center/cover no-repeat;
-            color: #fff;
+            background: #fff;
+            color: var(--text);
+            line-height: 1.6;
         }
 
-        .page-wrapper {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+        a {
+            color: inherit;
+            text-decoration: none;
         }
 
-        .topbar {
-            width: 94%;
-            margin: 20px auto 0;
-            background: rgba(255,255,255,0.94);
-            border-radius: 22px;
-            padding: 16px 28px;
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 18px rgba(20, 20, 20, 0.06);
+        }
+
+        .nav-inner {
+            width: min(1180px, 94%);
+            height: 76px;
+            margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+            gap: 28px;
         }
 
-        .logo {
+        .brand {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 10px;
+            font-weight: 900;
+            color: var(--text);
+            font-size: 22px;
+            white-space: nowrap;
         }
 
-        .logo img {
-            height: 52px;
-            object-fit: contain;
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #ff4b4b, #c90f17);
+            display: grid;
+            place-items: center;
+            color: #fff;
+            font-size: 22px;
+            box-shadow: 0 8px 18px rgba(215, 25, 32, 0.25);
         }
 
         .nav-links {
             display: flex;
-            gap: 34px;
             align-items: center;
+            justify-content: center;
+            gap: 34px;
+            flex: 1;
+            color: #303030;
+            font-weight: 700;
+            font-size: 15px;
         }
 
-        .nav-links a {
-            text-decoration: none;
-            color: #333;
-            font-weight: bold;
-            font-size: 15px;
+        .nav-links a.active {
+            color: var(--red);
         }
 
         .nav-actions {
             display: flex;
-            gap: 14px;
             align-items: center;
+            gap: 22px;
+            font-weight: 700;
+            color: #292929;
+            white-space: nowrap;
         }
 
-        .user-info {
-            display: flex;
-            gap: 12px;
+        .login-link {
+            display: inline-flex;
             align-items: center;
+<<<<<<< HEAD
             color: #333;
         }
 
@@ -101,173 +135,506 @@
             border-radius: 14px;
             padding: 10px 22px;
             font-weight: bold;
+=======
+            gap: 7px;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+>>>>>>> Package-management
             cursor: pointer;
-            box-shadow: 0 8px 18px rgba(201, 18, 18, 0.3);
-            text-decoration: none;
-            display: inline-block;
+        }
+
+        .cart-link {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            font-size: 22px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            width: 21px;
+            height: 21px;
+            border-radius: 50%;
+            background: var(--red);
+            color: #fff;
+            display: grid;
+            place-items: center;
+            font-size: 12px;
+            font-weight: 900;
         }
 
         .hero {
-            flex: 1;
-            width: 94%;
-            margin: 22px auto 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 28px;
+            position: relative;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 18% 22%, rgba(215, 25, 32, 0.08), transparent 34%),
+                linear-gradient(180deg, #fff6f7 0%, #fff 100%);
+            padding: 104px 20px 112px;
+            text-align: center;
         }
 
-        .welcome-card {
-            background: rgba(247, 243, 238, 0.97);
-            border-radius: 30px;
-            padding: 42px 38px;
-            box-shadow: 0 16px 35px rgba(0,0,0,0.24);
-            color: #222;
+        .hero::before,
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            background: url("{% static 'images/red-peppers.png' %}") center/contain no-repeat;
+            opacity: 0.055;
+            pointer-events: none;
         }
 
-        .welcome-card h1 {
-            font-size: 54px;
+        .hero::before {
+            top: 24px;
+            right: -88px;
+            transform: rotate(-15deg);
+        }
+
+        .hero::after {
+            bottom: -88px;
+            left: -72px;
+            transform: rotate(18deg);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: clamp(48px, 7vw, 82px);
+            line-height: 1.05;
             font-weight: 900;
-            color: #171717;
+            letter-spacing: -1px;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 span {
+            display: block;
+        }
+
+        .hero .accent {
+            color: var(--red);
+        }
+
+        .hero p {
+            color: #555;
+            font-size: 20px;
+            line-height: 1.9;
+            max-width: 780px;
+            margin: 0 auto;
+        }
+
+        .section {
+            padding: 86px 20px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin: 0 auto 52px;
+            max-width: 760px;
+        }
+
+        .section-header h2 {
+            font-size: 42px;
+            font-weight: 900;
+            color: var(--text);
             margin-bottom: 14px;
         }
 
-        .welcome-card h1 .accent {
-            color: #d92b1f;
-        }
-
-        .welcome-card p {
+        .section-header p {
+            color: var(--muted);
             font-size: 18px;
-            color: #666;
-            margin-bottom: 28px;
-            line-height: 1.6;
         }
 
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+        .container {
+            width: min(1180px, 94%);
+            margin: 0 auto;
         }
 
-        .dashboard-card {
-            background: rgba(255,255,255,0.95);
-            border-radius: 24px;
-            padding: 28px;
-            box-shadow: 0 12px 28px rgba(0,0,0,0.15);
-            text-align: center;
-            color: #333;
-            transition: 0.3s;
-        }
-
-        .dashboard-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 36px rgba(0,0,0,0.2);
-        }
-
-        .card-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
-        .dashboard-card h3 {
-            font-size: 22px;
-            margin-bottom: 10px;
-            color: #171717;
-        }
-
-        .dashboard-card p {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 16px;
-        }
-
-        .card-link {
-            display: inline-block;
-            color: #d92b1f;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .card-link:hover {
-            text-decoration: underline;
-        }
-
-        .stats-grid {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.18);
-            border-radius: 24px;
-            padding: 28px;
-            backdrop-filter: blur(5px);
+        .features-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-top: 20px;
-        }
-
-        .stat-box {
+            gap: 34px;
             text-align: center;
-            padding: 20px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 18px;
         }
 
-        .stat-number {
-            font-size: 36px;
+        .feature-card {
+            padding: 8px 10px;
+        }
+
+        .feature-icon {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 22px;
+            border-radius: 50%;
+            background: var(--pink);
+            color: var(--red);
+            display: grid;
+            place-items: center;
+            font-size: 32px;
+        }
+
+        .feature-card h3 {
+            font-size: 21px;
             font-weight: 900;
-            color: #ff4d2f;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .gallery-section {
+            background: #fafafa;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .gallery-card {
+            height: 245px;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.11);
+            background: #eee;
+        }
+
+        .gallery-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.35s ease;
+        }
+
+        .gallery-card:hover img {
+            transform: scale(1.04);
+        }
+
+        .farm-badge {
+            width: fit-content;
+            max-width: 94%;
+            margin: 34px auto 0;
+            background: var(--pink);
+            color: var(--red-dark);
+            border-radius: 999px;
+            padding: 12px 26px;
+            font-weight: 800;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .story {
+            background: #fff;
+        }
+
+        .story-content {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+            color: #4c4c4c;
+            font-size: 18px;
+            line-height: 2;
+        }
+
+        .story-content p + p {
+            margin-top: 24px;
+        }
+
+        .cta {
+            background: var(--red-dark);
+            color: #fff;
+            text-align: center;
+            padding: 78px 20px;
+        }
+
+        .cta h2 {
+            font-size: 38px;
+            font-weight: 900;
+            margin-bottom: 14px;
+        }
+
+        .cta p {
+            max-width: 760px;
+            margin: 0 auto 30px;
+            color: rgba(255,255,255,0.9);
+            font-size: 18px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .cta-button {
+            background: #fff;
+            color: var(--red-dark);
+            border-radius: 999px;
+            padding: 13px 28px;
+            font-weight: 900;
+            min-width: 170px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+        }
+
+        .footer {
+            background: #111;
+            color: #fff;
+            padding: 58px 20px 26px;
+        }
+
+        .footer-grid {
+            width: min(1180px, 94%);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1.2fr;
+            gap: 46px;
+        }
+
+        .footer h3 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            font-weight: 900;
+        }
+
+        .footer p,
+        .footer a {
+            color: #cfcfcf;
+            font-size: 15px;
+            line-height: 1.9;
+        }
+
+        .footer-links {
+            display: grid;
+            gap: 6px;
+        }
+
+        .footer-bottom {
+            width: min(1180px, 94%);
+            margin: 36px auto 0;
+            padding-top: 22px;
+            border-top: 1px solid #333;
+            color: #a9a9a9;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(18, 18, 18, 0.62);
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-overlay.is-open {
+            display: flex;
+        }
+
+        .login-modal {
+            position: relative;
+            width: min(430px, 100%);
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
+            padding: 34px 34px 30px;
+            color: var(--text);
+            direction: rtl;
+            text-align: right;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 32px;
+            height: 32px;
+            border: 0;
+            border-radius: 50%;
+            background: transparent;
+            color: #777;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            background: #f5f5f5;
+            color: #111;
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 28px;
+            padding: 4px 22px 0;
+        }
+
+        .modal-header h2 {
+            font-size: 27px;
+            line-height: 1.25;
+            font-weight: 900;
             margin-bottom: 8px;
         }
 
-        .stat-label {
+        .modal-header p {
+            color: #777;
+            font-size: 15px;
+        }
+
+        .modal-error {
+            margin-bottom: 16px;
+            padding: 11px 14px;
+            border-radius: 12px;
+            background: #fff0f0;
+            color: #b9151b;
+            font-weight: 700;
             font-size: 14px;
-            color: #e8e8e8;
+            text-align: center;
         }
 
-        @media (max-width: 1200px) {
-            .dashboard-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .modal-form {
+            display: grid;
+            gap: 17px;
         }
 
-        @media (max-width: 700px) {
-            .topbar {
-                flex-direction: column;
-                gap: 14px;
-                padding: 18px;
+        .modal-field label {
+            display: block;
+            margin-bottom: 7px;
+            color: #202020;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .modal-input {
+            position: relative;
+        }
+
+        .modal-input .input-icon {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            color: #a1a1a1;
+            font-size: 17px;
+            pointer-events: none;
+        }
+
+        .modal-input input {
+            width: 100%;
+            height: 48px;
+            border: 1px solid #dedede;
+            border-radius: 14px;
+            padding: 0 44px 0 16px;
+            background: #fff;
+            color: #1d1d1d;
+            font-size: 15px;
+            outline: none;
+            direction: rtl;
+        }
+
+        .modal-input input:focus {
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(215, 25, 32, 0.11);
+        }
+
+        .modal-submit {
+            width: 100%;
+            height: 50px;
+            border: 0;
+            border-radius: 14px;
+            background: var(--red-dark);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 900;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .modal-submit:hover {
+            background: #a91218;
+            transform: translateY(-1px);
+        }
+
+        .modal-register {
+            margin-top: 20px;
+            text-align: center;
+            color: #777;
+            font-size: 14px;
+        }
+
+        .modal-register a {
+            color: var(--red);
+            font-weight: 900;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        @media (max-width: 900px) {
+            .nav-inner {
+                height: auto;
+                padding: 18px 0;
+                flex-wrap: wrap;
             }
 
             .nav-links {
-                gap: 16px;
+                order: 3;
+                flex-basis: 100%;
+                gap: 18px;
                 flex-wrap: wrap;
-                justify-content: center;
             }
 
-            .dashboard-grid {
+            .features-grid,
+            .gallery-grid,
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .features-grid,
+            .gallery-grid,
+            .footer-grid {
                 grid-template-columns: 1fr;
             }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
+            .hero {
+                padding: 78px 20px 88px;
             }
 
-            .welcome-card {
-                padding: 24px 18px;
+            .gallery-card {
+                height: 220px;
             }
 
-            .welcome-card h1 {
-                font-size: 40px;
+            .login-modal {
+                padding: 30px 22px 26px;
             }
         }
     </style>
 </head>
 <body>
-<div class="page-wrapper">
+    {% include 'includes/site_navbar.html' with active_nav='home' login_modal=False %}
 
+<<<<<<< HEAD
     <header class="topbar">
         <div class="logo">
             <img src="{% static 'images/logo.png' %}" alt="logo">
@@ -293,20 +660,30 @@
             <a href="{% url 'logout' %}" class="btn-solid">התנתקות</a>
         </div>
     </header>
+=======
+    <main>
+        <section class="hero" id="home">
+            <div class="hero-content">
+                <h1>
+                    <span>החיים קצרים,</span>
+                    <span class="accent">תתחברו לחריף!</span>
+                </h1>
+                <p>
+                    גלו את עולם החריפים הייחודי שלנו - מחווה אורגנית בגליל העליון<br>
+                    מוצרים איכותיים, חוויות בלתי נשכחות וקהילה לוהטת
+                </p>
+            </div>
+        </section>
+>>>>>>> Package-management
 
-    <section class="hero">
-        <div class="welcome-card">
-            <h1>ברוך הבא, <span class="accent">{{ full_name }}!</span></h1>
-            <p>התחברת בהצלחה לחשבון שלך. כעת תוכל לגלוש בין המוצרים שלנו, לגלות טעמים חדשים ולהנות מחוויה חווה ייחודית.</p>
-
-            <div class="dashboard-grid">
-                <div class="dashboard-card">
-                    <div class="card-icon">🌶️</div>
-                    <h3>סרוק מוצרים</h3>
-                    <p>סרוק ותגלה מידע על סוגי הפלפלים וטעמים ייחודיים.</p>
-                    <a href="#" class="card-link">ללמוד עוד →</a>
+        <section class="section" id="activities">
+            <div class="container">
+                <div class="section-header">
+                    <h2>למה לבחור בנו?</h2>
+                    <p>חוות החריף שלנו מציעה חוויה שלמה לאוהבי החריפים</p>
                 </div>
 
+<<<<<<< HEAD
                 <div class="dashboard-card">
                     <div class="card-icon">🛍️</div>
                     <h3>חבילות חווה</h3>
@@ -319,30 +696,194 @@
                     <h3>המועדפות שלי</h3>
                     <p>חפץ את המוצרים המועדפים עליך וקבל הצעות מיוחדות.</p>
                     <a href="#" class="card-link">לראות →</a>
+=======
+                <div class="features-grid">
+                    <article class="feature-card">
+                        <div class="feature-icon">👥</div>
+                        <h3>קהילה לוהטת</h3>
+                        <p>הצטרפו לאלפי חובבי חריפים בקהילה שלנו</p>
+                    </article>
+                    <article class="feature-card">
+                        <div class="feature-icon">🔎</div>
+                        <h3>סרוק וגלה</h3>
+                        <p>סרקו QR וגלו את הסיפור מאחורי כל מוצר</p>
+                    </article>
+                    <article class="feature-card">
+                        <div class="feature-icon">✨</div>
+                        <h3>מוצרים ייחודיים</h3>
+                        <p>זנים נדירים וטעמים שלא תמצאו בשום מקום אחר</p>
+                    </article>
+                    <article class="feature-card">
+                        <div class="feature-icon">🌶️</div>
+                        <h3>חריף איכותי</h3>
+                        <p>מוצרים אורגניים מגידול עצמי בחווה בגליל העליון</p>
+                    </article>
+>>>>>>> Package-management
                 </div>
             </div>
+        </section>
 
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="stat-number">12</div>
-                    <div class="stat-label">מוצרים במועדפות</div>
+        <section class="section gallery-section" id="gallery">
+            <div class="container">
+                <div class="section-header">
+                    <h2>גלו את החווה שלנו</h2>
+                    <p>חוו את הקסם של החריפים דרך התמונות שלנו מהחווה בגליל</p>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-number">5</div>
-                    <div class="stat-label">הזמנות הושלמו</div>
+
+                <div class="gallery-grid">
+                    <figure class="gallery-card"><img src="{% static 'images/gallery-fresh-harvest.jpeg' %}" alt="ירקות ויבול טרי מהחווה"></figure>
+                    <figure class="gallery-card"><img src="{% static 'images/gallery-farm-field.jpeg' %}" alt="שדה חקלאי בגליל"></figure>
+                    <figure class="gallery-card"><img src="{% static 'images/gallery-asparagus-plant.webp' %}" alt="צמח חקלאי ירוק"></figure>
+                    <figure class="gallery-card"><img src="{% static 'images/gallery-green-plants.jpeg' %}" alt="צמחים ירוקים באדמה"></figure>
+                    <figure class="gallery-card"><img src="{% static 'images/gallery-soil-tools.jpeg' %}" alt="אדמה וכלי גינה"></figure>
+                    <figure class="gallery-card"><img src="{% static 'images/gallery-tractor-work.jpeg' %}" alt="עבודת חקלאות בשדה"></figure>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-number">₪249</div>
-                    <div class="stat-label">זמנים ממתינים</div>
+
+                <div class="farm-badge">🌶️ כל התמונות מהחווה האמיתית שלנו בגליל העליון 🌶️</div>
+            </div>
+        </section>
+
+        <section class="section story" id="about">
+            <div class="container">
+                <div class="section-header">
+                    <h2>הסיפור שלנו</h2>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-number">⭐ 4.8</div>
-                    <div class="stat-label">דירוג שלך</div>
+                <div class="story-content">
+                    <p>חוות החריף נוסדה בשנת 2018 בלב הגליל העליון, מתוך אהבה עמוקה לחריפים ורצון להביא לישראל את הזנים הטובים והנדירים ביותר מכל רחבי העולם.</p>
+                    <p>אנו מגדלים את החריפים שלנו באופן אורגני מלא, ללא שימוש בחומרי הדברה או דשנים כימיים. כל צמח מקבל את תשומת הלב האישית שהוא צריך, והתוצאה היא מוצרים באיכות יוצאת דופן.</p>
+                    <p>מעבר לגידול, אנו גם יוצרים מוצרים מעובדים בעבודת יד - רטבים, אבקות ותערובות תבלינים - ומארחים סדנאות וסיורים שמאפשרים לכם להתחבר לעולם המרתק של החריפים.</p>
                 </div>
             </div>
+        </section>
+
+        <section class="cta">
+            <div class="container">
+                <h2>מוכנים להתחיל את המסע החריף שלכם?</h2>
+                <p>הצטרפו לאלפי חובבי חריפים ותתחילו לחקור את העולם המרתק של הטעמים החריפים</p>
+                <div class="cta-buttons">
+                    {% if user_role == 'admin' %}
+                        <span class="cta-button" style="opacity: 0.6; cursor: not-allowed;">הירשמו עכשיו</span>
+                    {% else %}
+                        <a href="{% url 'signup' %}" class="cta-button">הירשמו עכשיו</a>
+                    {% endif %}
+                    <a href="{% url 'packages' %}" class="cta-button">לחצו לקטלוג המלא</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-grid">
+            <section>
+                <h3>חוות החריף</h3>
+                <p>חווה אורגנית לגידול חריפים נדירים ויצירת מוצרים איכותיים בעוטף עזה </p>
+            </section>
+            <section>
+                <h3>קישורים</h3>
+                <div class="footer-links">
+                    <a href="#gallery">גלריה</a>
+                    <a href="{% url 'packages' %}">פעילויות</a>
+                    <a href="#about">אודות</a>
+                </div>
+            </section>
+            <section>
+                <h3>צרו קשר</h3>
+                <p>טלפון: 04-1234567</p>
+                <p>אימייל: info@spicyfarm.co.il</p>
+                <p>עוטף עזה, ישראל</p>
+            </section>
         </div>
-    </section>
+        <div class="footer-bottom">© 2026 חוות החריף. כל הזכויות שמורות.</div>
+    </footer>
 
-</div>
+    <div class="modal-overlay" id="loginModal" aria-hidden="true">
+        <section class="login-modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+            <button type="button" class="modal-close" data-close-login aria-label="סגירת חלון התחברות">×</button>
+
+            <div class="modal-header">
+                <h2 id="loginModalTitle">ברוכים הבאים לחוות החריף</h2>
+                <p>התחברו או הירשמו כדי להמשיך</p>
+            </div>
+
+            {% if error %}
+                <div class="modal-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="post" action="{% url 'login' %}" class="modal-form">
+                {% csrf_token %}
+
+                <div class="modal-field">
+                    <label for="modal-email">שם משתמש</label>
+                    <div class="modal-input">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="modal-email" name="email" value="{{ email|default:'' }}" placeholder="הזן שם משתמש" required>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label for="modal-password">סיסמה</label>
+                    <div class="modal-input">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="modal-password" name="password" placeholder="הזן סיסמה" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="modal-submit">התחבר</button>
+            </form>
+
+            <div class="modal-register">
+                <span>אין לך חשבון</span>
+                {% if user_role == 'admin' %}
+                    <span style="opacity: 0.6; cursor: not-allowed;">הרישום עכשיו</span>
+                {% else %}
+                    <a href="{% url 'signup' %}">הרישום עכשיו</a>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <script>
+        (function () {
+            const modal = document.getElementById('loginModal');
+            const openButtons = document.querySelectorAll('[data-open-login]');
+            const closeButtons = document.querySelectorAll('[data-close-login]');
+            const firstInput = document.getElementById('modal-email');
+
+            function openModal() {
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('modal-open');
+                setTimeout(function () {
+                    firstInput.focus();
+                }, 50);
+            }
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('modal-open');
+            }
+
+            openButtons.forEach(function (button) {
+                button.addEventListener('click', openModal);
+            });
+
+            closeButtons.forEach(function (button) {
+                button.addEventListener('click', closeModal);
+            });
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

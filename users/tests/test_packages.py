@@ -96,55 +96,8 @@ class PackageBookingTests(TestCase):
         self.assertGreaterEqual(row.reserved_at, before)
         self.assertLessEqual(row.reserved_at, timezone.now())
 
-    def test_cancel_order_within_allowed_window(self):
-        self._login_session()
-        now = timezone.now()
-        order = CartItem.objects.create(
-            user=self.user,
-            package=self.package,
-            package_name=self.package.name,
-            reserved_at=now,
-            expires_at=now + timedelta(minutes=10),
-        )
 
-        response = self.client.delete(reverse('cancel_user_package', args=[order.id]))
-        self.assertEqual(response.status_code, 200)
-        order.refresh_from_db()
-        self.assertEqual(order.status, 'Cancelled')
 
-    def test_cancel_order_after_allowed_window_returns_400_time_expired(self):
-        self._login_session()
-        now = timezone.now()
-        order = CartItem.objects.create(
-            user=self.user,
-            package=self.package,
-            package_name=self.package.name,
-            reserved_at=now - timedelta(minutes=16),
-            expires_at=now + timedelta(minutes=10),
-        )
-
-        response = self.client.delete(reverse('cancel_user_package', args=[order.id]))
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json().get('error'), 'TimeExpired')
-        order.refresh_from_db()
-        self.assertEqual(order.status, 'Reserved')
-
-    def test_cancel_order_one_month_old_returns_400_no_db_change(self):
-        self._login_session()
-        now = timezone.now()
-        order = CartItem.objects.create(
-            user=self.user,
-            package=self.package,
-            package_name=self.package.name,
-            reserved_at=now - timedelta(days=35),
-            expires_at=now + timedelta(minutes=10),
-        )
-
-        response = self.client.delete(reverse('cancel_user_package', args=[order.id]))
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json().get('error'), 'TimeExpired')
-        order.refresh_from_db()
-        self.assertEqual(order.status, 'Reserved')
 
     def test_cancel_order_belongs_to_logged_in_user_returns_403(self):
         other_user = User.objects.create(

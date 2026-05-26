@@ -4,12 +4,10 @@ on:
   push:
     branches:
       - develop
-      - Package-management
 
   pull_request:
     branches:
       - develop
-      - Package-management
 
 jobs:
   test:
@@ -48,4 +46,4 @@ jobs:
 
       - name: Run tests
         run: |
-          python manage.py test --keepdb
+          python manage.py test --keepdb 

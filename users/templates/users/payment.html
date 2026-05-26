@@ -1,0 +1,148 @@
+{% include 'includes/site_navbar.html' %}
+
+<div class="payment-page" dir="rtl">
+    <h1>תשלום הזמנה</h1>
+
+    <div class="payment-card">
+        <h2>סיכום הזמנה</h2>
+
+        {% for item in cart_items %}
+            <div class="payment-row">
+                <span>{{ item.package_name }}</span>
+                <strong>₪{{ item.package.price }}</strong>
+            </div>
+        {% endfor %}
+
+        <div class="payment-total">
+            <span>סה״כ לתשלום</span>
+            <strong>₪{{ total_price|floatformat:2 }}</strong>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="payment-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" action="{% url 'complete_payment' %}">
+            {% csrf_token %}
+
+            <label>מספר כרטיס</label>
+            <input type="text" name="card_number" placeholder="1234 5678 9012 3456" required>
+
+            <label>תוקף</label>
+            <input type="text" name="expiry" placeholder="MM/YY" required>
+
+            <label>CVV</label>
+            <input type="text" name="cvv" placeholder="123" required>
+
+            <div class="payment-actions">
+                <a href="{% url 'my_orders' %}" class="btn-secondary">חזרה להזמנות</a>
+                <button type="submit" class="btn-pay">שלם ₪{{ total_price|floatformat:2 }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.payment-page {
+    min-height: calc(100vh - 90px);
+    padding: 80px 8%;
+    background: #fff;
+    color: #151515;
+}
+
+.payment-page h1 {
+    text-align: right;
+    font-size: 42px;
+    margin-bottom: 50px;
+    font-weight: 800;
+}
+
+.payment-card {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 28px;
+    padding: 45px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.06);
+}
+
+.payment-card h2 {
+    margin-bottom: 25px;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.payment-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 18px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 18px;
+}
+
+.payment-total {
+    margin: 30px 0 25px;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    font-size: 28px;
+    font-weight: 800;
+    color: #d71920;
+}
+
+.payment-message {
+    background: #fff3f3;
+    color: #d71920;
+    border: 1px solid #ffd5d5;
+    padding: 14px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.payment-card label {
+    display: block;
+    margin: 18px 0 8px;
+    font-weight: 700;
+}
+
+.payment-card input {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    font-size: 16px;
+}
+
+.payment-actions {
+    display: flex;
+    gap: 14px;
+    margin-top: 40px;
+}
+
+.btn-pay {
+    background: #d71920;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 14px 30px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn-secondary {
+    border: 2px solid #d71920;
+    color: #d71920;
+    border-radius: 16px;
+    padding: 12px 28px;
+    text-decoration: none;
+    font-weight: 700;
+}
+</style>

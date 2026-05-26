@@ -6,516 +6,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>התחברות</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
+        :root {
+            --pepper: #c91212;
+            --pepper-dark: #a90f14;
+            --pepper-bright: #ef3a22;
+            --surface: #ffffff;
+            --text: #171717;
+            --muted: #666666;
+            --border: #dddddd;
+            --error: #d92b1f;
+            --soft-error: #fff0ee;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
 
         body {
             min-height: 100vh;
-            background:
-                linear-gradient(rgba(15, 15, 15, 0.55), rgba(15, 15, 15, 0.7)),
-                url("{% static 'images/red-peppers.jpg' %}") center/cover no-repeat;
-            color: #fff;
+            background: linear-gradient(135deg, #fff7f5 0%, #ffffff 45%, #fff1ef 100%);
+            color: var(--text);
         }
 
-        .page-wrapper {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+        .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 36px 18px; }
+        .auth-shell { width: min(1080px, 100%); display: grid; grid-template-columns: 0.95fr 1.05fr; background: var(--surface); border-radius: 30px; overflow: hidden; box-shadow: 0 24px 70px rgba(80, 20, 20, 0.15); }
+        .auth-info { background: linear-gradient(rgba(20,0,0,0.55), rgba(20,0,0,0.72)), url("{% static 'images/red-peppers.png' %}") center/cover no-repeat; color: #fff; padding: 48px 42px; display: flex; flex-direction: column; justify-content: space-between; min-height: 650px; }
+        .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 900; font-size: 22px; }
+        .brand-mark { width: 42px; height: 42px; border-radius: 14px; background: linear-gradient(135deg, var(--pepper-bright), var(--pepper)); display: grid; place-items: center; }
+        .info-copy h1 { font-size: 50px; line-height: 1.08; margin-bottom: 18px; font-weight: 900; }
+        .info-copy p { color: rgba(255,255,255,0.9); font-size: 18px; line-height: 1.8; }
+        .info-tags { display: flex; gap: 12px; flex-wrap: wrap; }
+        .info-tags span { background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 9px 14px; font-size: 14px; }
+        .auth-card { padding: 52px 48px; display: flex; flex-direction: column; justify-content: center; }
+        .auth-header { text-align: center; margin-bottom: 30px; }
+        .auth-header h2 { font-size: 42px; font-weight: 900; margin-bottom: 8px; }
+        .auth-header .accent { color: var(--pepper); }
+        .auth-header p { color: var(--muted); font-size: 16px; }
+        .form-alert { background: var(--soft-error); color: var(--error); border: 1px solid #f5bbb3; border-radius: 14px; padding: 13px 15px; text-align: center; font-weight: 700; margin-bottom: 18px; }
+        .auth-form { display: grid; gap: 17px; }
+        .form-group label { display: block; margin-bottom: 7px; font-weight: 800; color: #2d2d2d; }
+        .input-wrap { position: relative; }
+        .input-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #9b9b9b; pointer-events: none; }
+        .input-wrap input { width: 100%; height: 52px; border: 1px solid var(--border); border-radius: 15px; background: #fff; padding: 0 44px 0 16px; font-size: 15px; direction: rtl; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        .input-wrap input:focus { outline: none; border-color: var(--pepper-bright); box-shadow: 0 0 0 4px rgba(239, 58, 34, 0.12); }
+        .input-wrap input.is-invalid { border-color: var(--error); background: var(--soft-error); }
+        .field-error { color: var(--error); font-size: 13px; margin-top: 6px; font-weight: 700; }
+        .password-hint { background: #f8fbf6; border: 1px solid #dfead9; color: #3a5b32; border-radius: 15px; padding: 13px 15px; font-size: 14px; line-height: 1.7; }
+        .auth-submit { width: 100%; height: 54px; border: none; border-radius: 16px; background: linear-gradient(135deg, var(--pepper), var(--pepper-bright)); color: #fff; font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 12px 24px rgba(201, 18, 18, 0.25); transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease; }
+        .auth-submit:hover { transform: translateY(-1px); box-shadow: 0 16px 30px rgba(201, 18, 18, 0.32); filter: brightness(1.02); }
+        .switch-auth { text-align: center; margin-top: 22px; color: var(--muted); }
+        .switch-auth a { color: var(--pepper); font-weight: 900; text-decoration: none; }
+        .switch-auth a:hover { text-decoration: underline; }
+        .home-link { display: inline-block; margin-top: 18px; color: var(--muted); text-align: center; text-decoration: none; }
+        @media (max-width: 900px) { .auth-shell { grid-template-columns: 1fr; } .auth-info { min-height: 320px; padding: 34px 28px; } .info-copy h1 { font-size: 38px; } .auth-card { padding: 38px 26px; } }
+        @media (max-width: 560px) { .auth-page { padding: 18px 10px; } .auth-shell { border-radius: 22px; } .auth-header h2 { font-size: 34px; } .auth-info { min-height: 260px; } .info-tags { display: none; } }
 
-        .topbar {
-            width: 94%;
-            margin: 20px auto 0;
-            background: rgba(255,255,255,0.94);
-            border-radius: 22px;
-            padding: 16px 28px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.18);
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .logo img {
-            height: 52px;
-            object-fit: contain;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 34px;
-            align-items: center;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #333;
-            font-weight: bold;
-            font-size: 15px;
-        }
-
-        .nav-actions {
-            display: flex;
-            gap: 14px;
-            align-items: center;
-        }
-
-        .btn-outline {
-            border: 2px solid #d63333;
-            color: #d63333;
-            background: transparent;
-            border-radius: 14px;
-            padding: 10px 22px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .btn-solid {
-            border: none;
-            color: #fff;
-            background: linear-gradient(135deg, #c91212, #ef3a22);
-            border-radius: 14px;
-            padding: 12px 24px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 8px 18px rgba(201, 18, 18, 0.3);
-        }
-
-        .hero {
-            flex: 1;
-            width: 94%;
-            margin: 22px auto 30px;
-            display: grid;
-            grid-template-columns: 1.15fr 0.95fr;
-            gap: 28px;
-            align-items: stretch;
-        }
-
-        .left-panel {
-            border-radius: 30px;
-            overflow: hidden;
-            position: relative;
-            min-height: 760px;
-            background:
-                linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.7)),
-                url("{% static 'images/green-peppers.png' %}") center/cover no-repeat;
-            box-shadow: 0 16px 35px rgba(0,0,0,0.24);
-        }
-
-        .left-overlay {
-            position: absolute;
-            inset: 0;
-            background:
-                linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.75));
-            padding: 42px 38px 30px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .headline-box {
-            background: rgba(0,0,0,0.5);
-            border-radius: 24px;
-            padding: 28px;
-            width: 78%;
-            backdrop-filter: blur(4px);
-        }
-
-        .headline-box h1 {
-            font-size: 58px;
-            line-height: 1.05;
-            margin-bottom: 14px;
-            font-weight: 900;
-        }
-
-        .headline-box h1 .accent {
-            color: #ff4d2f;
-        }
-
-        .headline-box p {
-            color: #f3f3f3;
-            font-size: 20px;
-            line-height: 1.7;
-        }
-
-        .feature-row {
-            display: flex;
-            gap: 16px;
-            margin-top: 28px;
-            flex-wrap: wrap;
-        }
-
-        .feature-card {
-            flex: 1;
-            min-width: 150px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.18);
-            border-radius: 18px;
-            padding: 18px;
-            backdrop-filter: blur(5px);
-        }
-
-        .feature-card h3 {
-            color: #fff;
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-
-        .feature-card p {
-            color: #e8e8e8;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
-            margin-top: 26px;
-        }
-
-        .product-box {
-            background: rgba(255,255,255,0.88);
-            border-radius: 18px;
-            overflow: hidden;
-            min-height: 170px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-
-        .product-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .right-panel {
-            background: rgba(247, 243, 238, 0.97);
-            border-radius: 30px;
-            padding: 42px 38px;
-            box-shadow: 0 16px 35px rgba(0,0,0,0.24);
-            color: #222;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .login-title {
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 54px;
-            font-weight: 900;
-            color: #171717;
-        }
-
-        .login-title .accent {
-            color: #d92b1f;
-        }
-
-        .login-subtitle {
-            text-align: center;
-            margin-bottom: 28px;
-            color: #666;
-            font-size: 18px;
-        }
-
-        .error-message {
-            background: #ffe4e1;
-            color: #c61b1b;
-            border: 1px solid #f2b3ad;
-            padding: 14px;
-            border-radius: 14px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .input-wrap {
-            position: relative;
-        }
-
-        .input-wrap input {
-            width: 100%;
-            height: 58px;
-            border: 1px solid #d8d8d8;
-            border-radius: 16px;
-            padding: 0 18px;
-            font-size: 15px;
-            background: #fff;
-            transition: 0.25s;
-        }
-
-        .input-wrap input:focus {
-            outline: none;
-            border-color: #ef3a22;
-            box-shadow: 0 0 0 4px rgba(239, 58, 34, 0.12);
-        }
-
-        .helper-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 8px 0 20px;
-            font-size: 14px;
-        }
-
-        .helper-row a {
-            text-decoration: none;
-            color: #d92b1f;
-            font-weight: bold;
-        }
-
-        .remember-me {
-            color: #555;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .login-btn {
-            width: 100%;
-            height: 60px;
-            border: none;
-            border-radius: 18px;
-            background: linear-gradient(135deg, #c81010, #f14626);
-            color: white;
-            font-size: 21px;
-            font-weight: 900;
-            cursor: pointer;
-            box-shadow: 0 12px 24px rgba(201, 18, 18, 0.28);
-            transition: 0.25s;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-1px);
-            opacity: 0.96;
-        }
-
-        .bottom-text {
-            text-align: center;
-            margin-top: 18px;
-            color: #555;
-            font-size: 15px;
-        }
-
-        .bottom-text a {
-            text-decoration: none;
-            color: #d92b1f;
-            font-weight: bold;
-        }
-
-        .footer-strip {
-            margin-top: 30px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .footer-mini {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 16px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .footer-mini h4 {
-            font-size: 16px;
-            margin-bottom: 6px;
-        }
-
-        .footer-mini p {
-            color: #ececec;
-            font-size: 13px;
-        }
-
-        @media (max-width: 1100px) {
-            .hero {
-                grid-template-columns: 1fr;
-            }
-
-            .left-panel {
-                min-height: 580px;
-            }
-
-            .headline-box {
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 700px) {
-            .topbar {
-                flex-direction: column;
-                gap: 14px;
-                padding: 18px;
-            }
-
-            .nav-links {
-                gap: 16px;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .products-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .right-panel,
-            .left-overlay {
-                padding: 24px 18px;
-            }
-
-            .login-title {
-                font-size: 40px;
-            }
-
-            .headline-box h1 {
-                font-size: 40px;
-            }
-        }
     </style>
 </head>
 <body>
-<div class="page-wrapper">
-
-    <header class="topbar">
-        <div class="logo">
-            <img src="{% static 'images/logo.png' %}" alt="logo">
-        </div>
-
-        <nav class="nav-links">
-            <a href="#">דף הבית</a>
-            <a href="#">המוצרים שלנו</a>
-            <a href="#">אודות</a>
-            <a href="#">צור קשר</a>
-        </nav>
-
-        <div class="nav-actions">
-            <button class="btn-outline" type="button">הרשמה</button>
-            <button class="btn-solid" type="button">התחברות</button>
-        </div>
-    </header>
-
-    <section class="hero">
-        <div class="left-panel">
-            <div class="left-overlay">
-                <div>
-                    <div class="headline-box">
-                        <h1>
-                            החיים קצרים<br>
-                            <span class="accent">תתחברו לחריף!</span>
-                        </h1>
-                        <p>
-                             התחבר לחשבון שלך כדי לגלות סוגי פלפלים, לסרוק מוצרים
-                             ולקבל חוויית חווה ייחודית – טעם, ידע והרבה חריף.
-                        </p>
-                    </div>
-
-                    <div class="feature-row">
-                        <div class="feature-card">
-                            <h3>סרוק וגלה</h3>
-                            <p>סרוק מוצרים וגלה מידע על סוגי הפלפלים והטעמים.</p>
-                        </div>
-                        <div class="feature-card">
-                            <h3>מוצרים ייחודיים</h3>
-                            <p>קבל גישה למוצרים מהחווה שלא תמצא במקום אחר.</p>
-                        </div>
-                        <div class="feature-card">
-                            <h3>חוויה מהחווה</h3>
-                            <p>התחבר לעולם של טעמים, חריפות וחוויה אמיתית.</p>
-                        </div>
-                    </div>
-
-                    <div class="products-grid">
-                        <div class="product-box">
-                            <img src="{% static 'images/shop-grid.png' %}" alt="products">
-                        </div>
-                        <div class="product-box">
-                           <img src="{% static 'images/green-peppers.png' %}" alt="green peppers">
-
-                            <img src="{% static 'images/red-peppers.png' %}" alt="red peppers">
-                        </div>
-                        <div class="product-box">
-                            <img src="{% static 'images/red-peppers.png' %}" alt="red peppers">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="footer-strip">
-                    <div class="footer-mini">
-                        <h4>חריף איכותי</h4>
-                        <p>מוצרים עם טעם אמיתי</p>
-                    </div>
-                    <div class="footer-mini">
-                        <h4>כניסה מהירה</h4>
-                        <p>גישה קלה לחשבון שלך</p>
-                    </div>
-                    <div class="footer-mini">
-                        <h4>קהילה לוהטת</h4>
-                        <p>לקוחות שאוהבים חריף</p>
-                    </div>
-                </div>
+{% include 'includes/site_navbar.html' with active_nav='login' %}
+<main class="auth-page login-page">
+    <section class="auth-shell" aria-label="מסך התחברות">
+        <aside class="auth-info">
+            <div class="brand"><span class="brand-mark">🌶️</span><span>הדינרים</span></div>
+            <div class="info-copy">
+                <h1>ברוכים הבאים<br>לעולם החריף</h1>
+                <p>התחברו לחשבון שלכם כדי לגשת למוצרים, חבילות החווה והחוויה האישית שלכם.</p>
             </div>
-        </div>
+            <div class="info-tags"><span>כניסה מהירה</span><span>חוויה מאובטחת</span><span>חריף איכותי</span></div>
+        </aside>
 
-        <div class="right-panel">
-            <h1 class="login-title">התח<span class="accent">ברות</span></h1>
-            <p class="login-subtitle"> ברוך הבא. התחבר לחשבון שלך</p>
+        <section class="auth-card">
+            <div class="auth-header">
+                <h2>התח<span class="accent">ברות</span></h2>
+                <p>הזינו את הפרטים שלכם כדי להמשיך</p>
+            </div>
 
-            {% if error %}
-                <div class="error-message">{{ error }}</div>
-            {% endif %}
+            {% if error %}<div class="form-alert">{{ error }}</div>{% endif %}
 
-            <form method="post">
+            <form method="post" class="auth-form" novalidate>
                 {% csrf_token %}
-
                 <div class="form-group">
                     <label for="email">אימייל</label>
                     <div class="input-wrap">
-                        <input type="email" id="email" name="email" value="{{ email|default:'' }}" placeholder="הכניס אימייל" required>
+                        <span class="input-icon">👤</span>
+                        <input type="email" id="email" name="email" value="{{ email|default:'' }}" placeholder="הכניסו אימייל" required class="{% if field_errors.email %}is-invalid{% endif %}">
                     </div>
+                    {% if field_errors.email %}<div class="field-error">{{ field_errors.email }}</div>{% endif %}
                 </div>
 
                 <div class="form-group">
                     <label for="password">סיסמה</label>
                     <div class="input-wrap">
-                        <input type="password" id="password" name="password" placeholder="הכניס סיסמה" required>
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="password" name="password" placeholder="הכניסו סיסמה" required class="{% if field_errors.password %}is-invalid{% endif %}">
                     </div>
+                    {% if field_errors.password %}<div class="field-error">{{ field_errors.password }}</div>{% endif %}
                 </div>
 
-              
-
-                <button type="submit" class="login-btn">התחברות</button>
-
-                <div class="bottom-text">
-                    אין לך חשבון?
-                    <a href="{% url 'signup' %}">להרשמה</a>
-                </div>
+                <button type="submit" class="auth-submit" data-testid="login-cta">Login</button>
             </form>
-        </div>
-    </section>
 
-</div>
+            <div class="switch-auth">אין לך חשבון? <a href="{% url 'signup' %}">Sign Up</a></div>
+            <a class="home-link" href="{% url 'home' %}">חזרה לדף הבית</a>
+        </section>
+    </section>
+</main>
 </body>
 </html>

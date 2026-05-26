@@ -1,0 +1,590 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עריכת חבילה - חוות החריף</title>
+    <style>
+        :root {
+            --red: #d71920;
+            --red-dark: #b9151b;
+            --text: #171717;
+            --muted: #6f6f6f;
+            --border: #ececec;
+            --soft: #fafafa;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { min-height: 100vh; background: #fff; color: var(--text); direction: rtl; }
+        a { color: inherit; text-decoration: none; }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            height: 76px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 18px rgba(20,20,20,0.06);
+        }
+
+        .navbar-inner {
+            width: min(1180px, 94%);
+            height: 100%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #151515;
+            font-size: 22px;
+            font-weight: 900;
+            text-decoration: none;
+        }
+
+        .navbar-brand-flame {
+            width: 30px;
+            height: 30px;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 30px;
+            flex: 1;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .navbar-nav a {
+            color: #303030;
+            transition: 0.25s;
+            padding: 8px 14px;
+            border-radius: 999px;
+        }
+
+        .navbar-nav a:hover,
+        .navbar-nav a.active {
+            background: #ffe6ea;
+            color: var(--red);
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .user-name {
+            color: #151515;
+            font-weight: 800;
+        }
+
+        .logout-btn {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 0;
+            background: transparent;
+            color: #303030;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.25s;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background: #ffe6ea;
+            color: var(--red);
+        }
+
+        .container {
+            width: min(1180px, 94%);
+            margin: 0 auto;
+            padding: 64px 0;
+        }
+
+        .header {
+            margin-bottom: 46px;
+        }
+
+        .header h1 {
+            font-size: 44px;
+            font-weight: 900;
+            margin-bottom: 12px;
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 18px;
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 900;
+            margin-bottom: 24px;
+            color: var(--text);
+        }
+
+        .message {
+            padding: 14px 18px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .message.success {
+            background: #f2fff2;
+            border: 1px solid #bde8bb;
+            color: #216d24;
+        }
+
+        .message.error {
+            background: #fff4f3;
+            border: 1px solid #f0b7b0;
+            color: #a31911;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .form-row label {
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-row input,
+        .form-row textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        .form-row input:focus,
+        .form-row textarea:focus {
+            outline: none;
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(215,25,32,0.1);
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .image-preview {
+            margin-top: 12px;
+            display: none;
+        }
+
+        .image-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .image-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            align-items: center;
+        }
+
+        .clear-image-btn {
+            background: #f5f5f5;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .clear-image-btn:hover {
+            background: #ffe6ea;
+            color: var(--red);
+            border-color: var(--red);
+        }
+
+        .image-name {
+            font-size: 13px;
+            color: var(--muted);
+            padding: 8px 0;
+        }
+
+        .current-image {
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--soft);
+            border-radius: 12px;
+        }
+
+        .current-image img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .current-image p {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .submit-row {
+            margin-top: 32px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .submit-btn {
+            border: none;
+            color: #fff;
+            background: var(--red);
+            border-radius: 14px;
+            padding: 12px 24px;
+            font-weight: 900;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            background: var(--red-dark);
+            transform: translateY(-1px);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.2s;
+            padding: 8px 14px;
+            border-radius: 8px;
+        }
+
+        .back-link:hover {
+            background: var(--soft);
+            color: var(--text);
+        }
+
+        .promotion-info {
+            background: linear-gradient(135deg, #fff4e6, #ffe8cc);
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .promotion-info.active {
+            display: block;
+        }
+
+        .promotion-info h4 {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .promotion-prices {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .price-original-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .price-original-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .price-original-value {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--muted);
+            text-decoration: line-through;
+        }
+
+        .price-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .price-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .price-value {
+            font-size: 32px;
+            font-weight: 900;
+            color: #d71920;
+        }
+
+        .promotion-dates {
+            font-size: 13px;
+            color: var(--muted);
+            padding-top: 12px;
+            border-top: 1px solid rgba(215, 25, 32, 0.2);
+        }
+
+        @media (max-width: 1150px) {
+            .navbar-nav { display: none; }
+            .header h1 { font-size: 34px; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .panel { padding: 24px; }
+            .container { padding: 40px 0; }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a href="{% url 'home' %}" class="navbar-brand">
+            <span>הדינרים</span>
+            <svg class="navbar-brand-flame" viewBox="0 0 64 64" aria-hidden="true">
+                <path d="M36.8 5.5C39.8 17 55 21.8 55 39.2C55 51.7 44.8 60 32.1 60C19.3 60 9 51.8 9 39.1C9 28.5 15.1 21.2 22.4 14.4C21.7 23.2 27 27.2 31.2 28.9C30.2 18.9 33.1 10.8 36.8 5.5Z"
+                      fill="none" stroke="#d71920" stroke-width="6"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+
+        <div class="navbar-nav">
+            <a href="{% url 'home' %}">דף הבית</a>
+            <a href="{% url 'admin_dashboard' %}">לוח בקרה</a>
+            <a href="{% url 'package_reservation_admin' %}">זמן שמירה</a>
+            <a href="{% url 'promotions' %}">מבצעים</a>
+        </div>
+
+        <div class="navbar-actions">
+            <span class="user-name">{{ full_name }}</span>
+            <a href="{% url 'logout' %}" class="logout-btn">התנתקות</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <h1>עריכת חבילה</h1>
+        <p>{{ package.name }}</p>
+    </div>
+
+    <div class="panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <a href="{% url 'admin_packages_view' %}" class="back-link">← חזור לרשימה</a>
+            <a href="{% url 'promotions' %}?package_id={{ package.id }}" style="display: inline-flex; align-items: center; gap: 8px; color: var(--red); font-weight: 700; padding: 10px 16px; border-radius: 8px; background: #ffe6ea; text-decoration: none; transition: 0.2s;" title="ערוך מבצעים לחבילה זו">
+                🎁 ערוך מבצעים
+            </a>
+        </div>
+
+        {% if success_message %}
+            <div class="message success">✓ החבילה עודכנה בהצלחה.</div>
+        {% endif %}
+        {% if error_message %}
+            <div class="message error">✗ {{ error_message }}</div>
+        {% endif %}
+
+        <div class="section-title">ערוך פרטים</div>
+        <form method="post" action="{% url 'edit_package' package.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+                <div>
+                    <label for="name">שם החבילה</label>
+                    <input id="name" name="name" type="text" required value="{{ package.name }}" />
+                </div>
+                <div>
+                    <label for="price">מחיר (₪)</label>
+                    <input id="price" name="price" type="number" step="0.01" min="0" required value="{{ package.price }}" />
+                    {% if active_discount %}
+                        <div class="promotion-info active">
+                            <h4>🎁 קיים מבצע פעיל</h4>
+                            <div class="promotion-prices">
+                                <div class="price-original-item">
+                                    <div class="price-original-label">מחיר רגיל</div>
+                                    <div class="price-original-value">₪{{ package.price }}</div>
+                                </div>
+                                <div class="price-item">
+                                    <div class="price-label">מחיר מבצע</div>
+                                    <div class="price-value">₪{{ package.get_discounted_price }}</div>
+                                </div>
+                            </div>
+                            <div class="promotion-dates">
+                                📅 {{ active_discount.start_date|date:"d/m/Y" }} - {{ active_discount.end_date|date:"d/m/Y" }}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <label for="package_type">סוג חבילה</label>
+                    <input id="package_type" name="package_type" type="text" value="{{ package.package_type }}" />
+                </div>
+                <div>
+                    <label for="farm_area">אזור החווה</label>
+                    <input id="farm_area" name="farm_area" type="text" value="{{ package.farm_area }}" />
+                </div>
+            </div>
+
+
+           <div class="form-row">
+    <div>
+        <label for="capacity">כמות זמינה</label>
+        <input id="capacity"
+               name="capacity"
+               type="number"
+               min="0"
+               value="{{ package.capacity }}" />
+    </div>
+
+    <div>
+        <label for="reservation_minutes">זמן שמירה בעגלה (דקות)</label>
+        <input id="reservation_minutes"
+               name="reservation_minutes"
+               type="number"
+               min="1"
+               max="10080"
+               value="{{ package.reservation_minutes }}" />
+    </div>
+</div>
+
+<div class="form-row">
+    <div>
+        <label for="tour_datetime">תאריך ושעת סיור</label>
+        <input id="tour_datetime"
+               name="tour_datetime"
+               type="datetime-local"
+               value="{% if package.tour_datetime %}{{ package.tour_datetime|date:'Y-m-d\\TH:i' }}{% endif %}" />
+    </div>
+
+    <div>
+        <label for="cancellation_hours">כמה שעות לפני הסיור ניתן לבטל</label>
+        <input id="cancellation_hours"
+               name="cancellation_hours"
+               type="number"
+               min="1"
+               value="{{ package.cancellation_hours }}" />
+    </div>
+</div>
+
+            <div class="form-row">
+                <div>
+                    <label for="image">תמונת החבילה</label>
+                    <input id="image" name="image" type="file" accept="image/*" />
+                    <div class="image-name" id="image-name"></div>
+                    <div class="image-preview" id="image-preview">
+                        <img id="image-preview-img" src="" alt="תמונה מקדימה" />
+                        <div class="image-actions">
+                            <button type="button" class="clear-image-btn" id="clear-image-btn">🗑️ מחק תמונה</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if package.image %}
+                <div class="current-image">
+                    <p>🖼️ תמונה נוכחית:</p>
+                    <img src="{{ package.image.url }}" alt="{{ package.name }}" />
+                    <p>החלפת תמונה: בחר קובץ חדש למעלה</p>
+                </div>
+            {% endif %}
+            <div class="form-row full">
+                <div>
+                    <label for="description">תיאור החבילה</label>
+                    <textarea id="description" name="description" rows="4">{{ package.description }}</textarea>
+                </div>
+            </div>
+            <div class="submit-row">
+                <button type="submit" class="submit-btn">💾 שמור שינויים</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    const imageInput = document.getElementById('image');
+    const imagePreview = document.getElementById('image-preview');
+    const imagePreviewImg = document.getElementById('image-preview-img');
+    const imageName = document.getElementById('image-name');
+    const clearImageBtn = document.getElementById('clear-image-btn');
+
+    imageInput.addEventListener('change', function () {
+        const file = this.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                imagePreviewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+                imageName.textContent = '📁 ' + file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)';
+            };
+
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.style.display = 'none';
+            imageName.textContent = '';
+        }
+    });
+
+    clearImageBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        imageInput.value = '';
+        imagePreview.style.display = 'none';
+        imageName.textContent = '';
+    });
+})();
+</script>
+</body>
+</html>

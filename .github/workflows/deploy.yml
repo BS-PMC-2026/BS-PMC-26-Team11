@@ -4,10 +4,7 @@ on:
   push:
     branches:
       - develop
-      - Package-management
       - main
-      - Hackathon
-
   workflow_dispatch:
 
 env:
