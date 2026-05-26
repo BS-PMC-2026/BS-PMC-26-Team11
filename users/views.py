@@ -2,6 +2,7 @@
 import re
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
+from django.db import transaction
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
@@ -17,6 +18,7 @@ from .cancellation import assert_cancellation_window_open, cancellation_deadline
 from .exceptions import TimeExpired
 from .reservations import release_expired_reservations
 from .email import send_package_cancellation_email
+from django.contrib import messages
 
 def is_strong_password(password):
     if len(password) < 8:
@@ -576,14 +578,22 @@ def cancel_user_package(request, order_id):
     except CartItem.DoesNotExist:
         return JsonResponse({'error': 'not_found'}, status=404)
 
-    if order.user_id != user.id:
+    is_admin = user.role == 'admin'
+
+    # Regular users can cancel only their own package.
+    # Admin can cancel any user's package.
+    if not is_admin and order.user_id != user.id:
         return JsonResponse({'error': 'forbidden'}, status=403)
 
     if order.status != 'Reserved':
         return JsonResponse({'error': 'already_cancelled'}, status=400)
 
     try:
-        assert_cancellation_window_open(order.reserved_at)
+        # Admin ignores the time limit.
+        assert_cancellation_window_open(
+            order.reserved_at,
+            is_admin=is_admin
+        )
     except TimeExpired:
         return JsonResponse({'error': 'TimeExpired'}, status=400)
 
@@ -591,11 +601,13 @@ def cancel_user_package(request, order_id):
     order.save()
 
     try:
-        send_package_cancellation_email(user, order.package_name)
+        # Send email to the user who owns the order, not necessarily the admin.
+        send_package_cancellation_email(order.user, order.package_name)
     except Exception:
         pass
 
     cart_context = _build_cart_context(user)
+
     return JsonResponse({
         'status': 'cancelled',
         'id': order.id,
@@ -672,3 +684,30 @@ def admin_dashboard(request):
     })
 
     return render(request, 'users/login.html')
+from django.http import JsonResponse
+
+def delete_package(request, package_id):
+    user = _get_logged_in_user(request)
+
+    if not user or user.role != 'admin':
+        if request.method == 'DELETE':
+            return JsonResponse({'error': 'forbidden'}, status=403)
+        return redirect('login')
+
+    if request.method not in ['POST', 'DELETE']:
+        return redirect('/admin/packages/')
+
+    package = get_object_or_404(Package, id=package_id)
+
+    with transaction.atomic():
+        if hasattr(package, 'image') and package.image:
+            package.image.delete(save=False)
+
+        package.delete()
+
+    messages.success(request, 'החבילה נמחקה בהצלחה.')
+
+    if request.method == 'DELETE':
+        return JsonResponse({'status': 'deleted', 'id': package_id})
+
+    return redirect('/admin/packages/')

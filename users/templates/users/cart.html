@@ -309,14 +309,34 @@
                                         <td>₪{{ item_data.item.package.price }}</td>
                                         <td>{{ item_data.item.reserved_at|date:"d/m H:i" }}</td>
                                         <td>{{ item_data.item.expires_at|date:"d/m H:i" }}</td>
-                                        <td>
-                                            <div class="order-info">שמירה: {{ item_data.item.package.reservation_minutes }} דקות</div>
-                                            {% if item_data.cancelable %}
-                                                <button class="btn-secondary cancel-button" data-item-id="{{ item_data.item.id }}">ביטול</button>
+                                       <td>
+                                         {% if item_data.item.status == 'Reserved' %}
+                                              <div class="order-info">
+                                                  שמירה: {{ item_data.item.package.reservation_minutes }} דקות
+                                              </div>
+
+                                             {% if item_data.cancelable %}
+                                                <button class="btn-secondary cancel-button"
+                                                        data-item-id="{{ item_data.item.id }}">
+                                                   ביטול
+                                                 </button>
                                             {% else %}
-                                                <span style="color: var(--muted);">חלון ביטול עבר</span>
-                                            {% endif %}
-                                        </td>
+                                                 <span style="color: var(--muted);">
+                                                      חלון ביטול עבר
+                                                 </span>
+                                           {% endif %}
+
+                                        {% elif item_data.item.status == 'Cancelled' %}
+                                                <span style="color: #d71920; font-weight: 700;">
+                                                           בוטל
+                                                 </span>
+
+                                        {% else %}
+                                           <span style="color: var(--muted); font-weight: 700;">
+                                               {{ item_data.item.status }}
+                                            </span>
+                                          {% endif %}
+                                         </td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
