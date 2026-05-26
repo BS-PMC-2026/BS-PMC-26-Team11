@@ -4,48 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
-    <title>חבילות חווה</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { min-height: 100vh; background: linear-gradient(rgba(15, 15, 15, 0.55), rgba(15, 15, 15, 0.7)), url("{% static 'images/red-peppers.jpg' %}") center/cover no-repeat; color: #fff; }
-        .page-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
-        .topbar { width: 94%; margin: 20px auto 0; background: rgba(255,255,255,0.94); border-radius: 22px; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 25px rgba(0,0,0,0.18); }
-        .logo { display: flex; align-items: center; gap: 14px; }
-        .logo img { height: 52px; object-fit: contain; }
-        .nav-links { display: flex; gap: 24px; align-items: center; }
-        .nav-links a { text-decoration: none; color: #333; font-weight: bold; font-size: 15px; }
-        .nav-actions { display: flex; gap: 14px; align-items: center; }
-        .user-name { font-weight: bold; color: #333; }
-        .cart-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: linear-gradient(135deg, #c91212, #ef3a22); color: #fff; font-weight: bold; text-decoration: none; }
-        .btn-solid { border: none; color: #fff; background: linear-gradient(135deg, #c91212, #ef3a22); border-radius: 14px; padding: 10px 22px; font-weight: bold; cursor: pointer; text-decoration: none; }
-        .page-title { width: 94%; margin: 24px auto 0; font-size: 40px; color: #fff; }
-        .content { width: 94%; margin: 18px auto 40px; display: grid; gap: 24px; }
-        .message { padding: 16px 20px; border-radius: 18px; background: rgba(255,255,255,0.94); color: #222; box-shadow: 0 10px 20px rgba(0,0,0,0.12); }
-        .message.success { border-left: 6px solid #2a9825; }
-        .message.error { border-left: 6px solid #d92b1f; }
-        .packages-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-        .package-card { background: rgba(255,255,255,0.95); border-radius: 24px; overflow: hidden; box-shadow: 0 14px 32px rgba(0,0,0,0.18); color: #222; display: flex; flex-direction: column; }
-        .package-card img { width: 100%; height: 200px; object-fit: cover; }
-        .package-card .card-body { padding: 22px; display: flex; flex-direction: column; gap: 14px; }
-        .package-title { font-size: 22px; font-weight: 800; color: #171717; }
-        .package-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; color: #555; }
-        .package-meta span { display: block; }
-        .package-description { font-size: 15px; line-height: 1.6; color: #444; min-height: 80px; }
-        .price-section { display: flex; align-items: center; gap: 10px; }
-        .price-original { text-decoration: line-through; color: #999; font-size: 14px; }
-        .price-discounted { font-size: 20px; font-weight: 900; color: #2a9825; }
-        .price-badge { background: #2a9825; color: #fff; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: 700; }
-        .package-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-        .package-footer .price { font-size: 18px; font-weight: 700; color: #d92b1f; }
-        .package-footer a, .package-footer button { text-decoration: none; border: none; cursor: pointer; padding: 10px 18px; border-radius: 14px; font-weight: bold; }
-        .view-btn { background: #f4f4f4; color: #333; }
-        .reserve-btn { background: linear-gradient(135deg, #c91212, #ef3a22); color: #fff; }
-        .promotion-btn { background: #ffc107; color: #333; font-size: 12px; padding: 8px 12px; }
-        .buttons-row { display: flex; gap: 8px; width: 100%; flex-wrap: wrap; }
-        @media (max-width: 1100px) { .packages-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 760px) { .topbar, .page-title, .content { width: 96%; } .packages-grid { grid-template-columns: 1fr; } }
-=======
     <title>פעילויות וסיורים</title>
     <style>
         :root {
@@ -147,38 +105,10 @@
         @media (max-width: 1150px) { .products-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 860px) { .topbar { height: auto; } .topbar-inner { padding: 16px 0; flex-wrap: wrap; } .nav-links { order: 3; flex-basis: 100%; flex-wrap: wrap; } .products-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 560px) { .products-grid { grid-template-columns: 1fr; } .page-header h1 { font-size: 34px; } .product-card { min-height: auto; } .product-bottom { align-items: stretch; flex-direction: column; } .order-button { width: 100%; } }
->>>>>>> origin/Shahed_hackton
     </style>
 </head>
 <body>
 <div class="page-wrapper">
-<<<<<<< HEAD
-    <header class="topbar">
-        <div class="logo">
-            <img src="{% static 'images/logo.png' %}" alt="logo">
-        </div>
-        <nav class="nav-links">
-            <a href="{% url 'home_page' %}">דף הבית</a>
-            <a href="{% url 'packages' %}">חבילות חווה</a>
-            <a href="{% url 'my_orders' %}">ההזמנות שלי</a>
-            {% if user_role == 'admin' %}
-                <a href="{% url 'promotions' %}" style="color: #c91212; font-weight: 900;">הגדרת מבצעים</a>
-                <a href="{% url 'package_reservation_admin' %}" style="color: #c91212; font-weight: 900;">זמן שמירה בעגלה</a>
-            {% endif %}
-        </nav>
-        <div class="nav-actions">
-            <span class="user-name">{{ full_name }}</span>
-            <a href="{% url 'my_orders' %}" class="cart-icon">🛒</a>
-            <a href="{% url 'logout' %}" class="btn-solid">התנתקות</a>
-        </div>
-    </header>
-
-    <h1 class="page-title">חבילות ביקור בחווה</h1>
-
-    <div class="content">
-        {% if success_message == 'reserved' %}
-            <div class="message success">החבילה נוספה לעגלה. שמירה ל־{{ reserved_minutes }} דקות מההוספה.</div>
-=======
     {% include 'includes/site_navbar.html' with active_nav='tours' show_cart=True login_modal=False %}
 
     <main class="products-page">
@@ -189,78 +119,19 @@
 
         {% if success_message == 'reserved' %}
             <div class="message success">הסיור נוסף לסל. שמירה ל־{{ reserved_minutes }} דקות מההוספה.</div>
->>>>>>> origin/Shahed_hackton
         {% endif %}
         {% if error_message %}
             <div class="message error">
                 {% if error_message == 'not_available' %}
-<<<<<<< HEAD
-                    החבילה אינה זמינה כרגע.
-                {% elif error_message == 'capacity_full' %}
-                    הקיבולת המוצעת עבור החבילה מלאה.
-                {% else %}
-                    אירעה שגיאה בעת הוספת החבילה לעגלה.
-=======
                     הסיור אינו זמין כרגע.
                 {% elif error_message == 'capacity_full' %}
                     המלאי עבור הסיור אזל.
                 {% else %}
                     אירעה שגיאה בעת הוספת הסיור לסל.
->>>>>>> origin/Shahed_hackton
                 {% endif %}
             </div>
         {% endif %}
 
-<<<<<<< HEAD
-        <div class="packages-grid">
-            {% for package in packages %}
-                <div class="package-card">
-                    {% if package.image_url %}
-                        <img src="{{ package.image_url }}" alt="{{ package.name }}">
-                    {% endif %}
-                    <div class="card-body">
-                        <div class="package-title">{{ package.name }}</div>
-                        <div class="package-meta">
-                            <span>סוג: {{ package.package_type }}</span>
-                            <span>אזור החווה: {{ package.farm_area }}</span>
-                        </div>
-                        <div class="package-description">{{ package.description }}</div>
-                        <div class="package-meta">
-                            {% if package.has_active_discount %}
-                                <span>
-                                    <div class="price-section">
-                                        <span class="price-original">₪{{ package.price }}</span>
-                                        <span class="price-discounted">₪{{ package.get_discounted_price }}</span>
-                                        <span class="price-badge">מבצע</span>
-                                    </div>
-                                </span>
-                            {% else %}
-                                <span>מחיר: ₪{{ package.price }}</span>
-                            {% endif %}
-                            <span>מקומות פנויים: {{ package.available_capacity }}</span>
-                        </div>
-                        <div class="package-meta">
-                            <span style="grid-column: 1 / -1; font-size: 13px; color: #1a6cad; font-weight: 700;">שמירה בעגלה: {{ package.reservation_minutes }} דקות מההוספה.</span>
-                        </div>
-                        <div class="package-footer">
-                            <a href="{% url 'package_detail' package.id %}" class="view-btn">פרטים</a>
-                            <form method="post" action="{% url 'add_to_cart' package.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="reserve-btn">הוסף לעגלה</button>
-                            </form>
-                            {% if user_role == 'admin' %}
-                                <a href="{% url 'promotions' %}?package_id={{ package.id }}" class="promotion-btn">הגדרת מבצע</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            {% empty %}
-                <div class="message">אין חבילות זמינות כרגע.</div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-=======
         <section class="products-grid" aria-label="רשימת סיורים">
             {% for package in packages %}
                 <article class="product-card">
@@ -535,6 +406,5 @@
     });
 })();
 </script>
->>>>>>> origin/Shahed_hackton
 </body>
 </html>

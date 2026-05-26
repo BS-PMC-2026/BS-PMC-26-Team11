@@ -88,7 +88,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 
 DATABASES = {
-          'ENGINE': 'mssql',
+    'default': {
+        'ENGINE': 'mssql',
         'NAME': os.getenv('DB_NAME'),
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
@@ -97,8 +98,9 @@ DATABASES = {
 
         'OPTIONS': {
             'driver': 'ODBC Driver 18 for SQL Server',
-            'extra_params': 'Encrypt=yes;TrustServerCertificate=yes;',
+            'extra_params': 'Encrypt=yes;TrustServerCertificate=yes',
         },
+    }
 }
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

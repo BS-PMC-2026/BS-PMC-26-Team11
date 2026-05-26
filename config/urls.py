@@ -16,6 +16,7 @@ from users.views import (
     package_reservation_admin,
     admin_dashboard,
     admin_packages,
+    delete_package,
     edit_package,
 )
 
@@ -39,6 +40,7 @@ urlpatterns = [
     path('api/user/packages/<int:order_id>/', cancel_user_package, name='cancel_user_package'),
     path('users/', include('users.urls')),
     path('logout/', logout_view, name='logout'),
+    path('admin/packages/<int:package_id>/delete/', delete_package, name='delete_package'),
     path('signup-success/', signup_success, name='signup_success'),
 ]
 

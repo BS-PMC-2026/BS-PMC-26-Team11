@@ -424,19 +424,6 @@
                         <td>{{ package.capacity|default:"-" }}</td>
                         <td>
                             <a href="{% url 'edit_package' package.id %}" style="color: var(--red); text-decoration: underline; font-weight: 700;">✏️ ערוך</a>
-<<<<<<< HEAD
-                             <form method="post"
-                                 action="{% url 'delete_package' package.id %}"
-                                 style="display:inline-block; margin-right: 12px;"
-                                 onsubmit="return confirm('האם אתה בטוח שברצונך למחוק את החבילה?');">
-                                {% csrf_token %}
-                               <button type="submit"
-                                       style="background:none; border:none; color:#d71920; cursor:pointer; font-weight:bold; text-decoration:underline;">
-                                    🗑️ מחק
-                                </button>
-                             </form>
-=======
->>>>>>> origin/Shahed_hackton
                         </td>
                     </tr>
                 {% empty %}
