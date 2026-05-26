@@ -356,6 +356,7 @@
                     <thead>
                         <tr>
                             <th>📦 שם החבילה</th>
+                            <th>📅 תאריך סיור</th>
                             <th>💰 מחיר</th>
                             <th>📅 התחלת שמירה</th>
                             <th>⏰ תפוגת שמירה</th>
@@ -366,7 +367,16 @@
                         {% for item_data in orders %}
                             <tr id="cart-item-{{ item_data.item.id }}">
                                 <td>{{ item_data.item.package_name }}</td>
+                                <td>
+    {% if item_data.item.package.tour_datetime %}
+        {{ item_data.item.package.tour_datetime|date:"d/m/Y H:i" }}
+    {% else %}
+        טרם נקבע
+    {% endif %}
+</td>
+
                                 <td>₪{{ item_data.item.package.price }}</td>
+                                
                                 <td>{{ item_data.item.reserved_at|date:"d/m H:i" }}</td>
                                 <td>{{ item_data.item.expires_at|date:"d/m H:i" }}</td>
                                 <td>
@@ -383,7 +393,7 @@
                 </table>
                 <div class="cart-actions">
                     <a href="{% url 'packages' %}" class="btn-secondary">המשך קניות</a>
-                    <button class="btn-reserve">סיים הזמנה</button>
+                   <a href="{% url 'payment_page' %}" class="btn-reserve">סיים הזמנה</a>
                 </div>
                 <div id="cancel-message" class="cancel-message"></div>
             {% else %}

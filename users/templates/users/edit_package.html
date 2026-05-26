@@ -476,16 +476,48 @@
                     <input id="farm_area" name="farm_area" type="text" value="{{ package.farm_area }}" />
                 </div>
             </div>
-            <div class="form-row">
-                <div>
-                    <label for="capacity">כמות זמינה</label>
-                    <input id="capacity" name="capacity" type="number" min="0" value="{{ package.capacity }}" />
-                </div>
-                <div>
-                    <label for="reservation_minutes">זמן שמירה בעגלה (דקות)</label>
-                    <input id="reservation_minutes" name="reservation_minutes" type="number" min="1" max="10080" value="{{ package.reservation_minutes }}" />
-                </div>
-            </div>
+
+
+           <div class="form-row">
+    <div>
+        <label for="capacity">כמות זמינה</label>
+        <input id="capacity"
+               name="capacity"
+               type="number"
+               min="0"
+               value="{{ package.capacity }}" />
+    </div>
+
+    <div>
+        <label for="reservation_minutes">זמן שמירה בעגלה (דקות)</label>
+        <input id="reservation_minutes"
+               name="reservation_minutes"
+               type="number"
+               min="1"
+               max="10080"
+               value="{{ package.reservation_minutes }}" />
+    </div>
+</div>
+
+<div class="form-row">
+    <div>
+        <label for="tour_datetime">תאריך ושעת סיור</label>
+        <input id="tour_datetime"
+               name="tour_datetime"
+               type="datetime-local"
+               value="{% if package.tour_datetime %}{{ package.tour_datetime|date:'Y-m-d\\TH:i' }}{% endif %}" />
+    </div>
+
+    <div>
+        <label for="cancellation_hours">כמה שעות לפני הסיור ניתן לבטל</label>
+        <input id="cancellation_hours"
+               name="cancellation_hours"
+               type="number"
+               min="1"
+               value="{{ package.cancellation_hours }}" />
+    </div>
+</div>
+
             <div class="form-row">
                 <div>
                     <label for="image">תמונת החבילה</label>

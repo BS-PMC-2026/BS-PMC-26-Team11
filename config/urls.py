@@ -18,6 +18,9 @@ from users.views import (
     admin_packages,
     delete_package,
     edit_package,
+    paid_orders_view,
+    payment_page,
+    complete_payment,
     delete_package,
 )
 
@@ -43,6 +46,9 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('logout/', logout_view, name='logout'),
     path('admin/packages/<int:package_id>/delete/', delete_package, name='delete_package'),
+    path('payment/', payment_page, name='payment_page'),
+    path('payment/complete/', complete_payment, name='complete_payment'),
+    path('paid-orders/', paid_orders_view, name='paid_orders'),
     path('signup-success/', signup_success, name='signup_success'),
 ]
 

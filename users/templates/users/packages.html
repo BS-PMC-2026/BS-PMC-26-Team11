@@ -129,6 +129,7 @@
                 {% else %}
                     אירעה שגיאה בעת הוספת הסיור לסל.
                 {% endif %}
+                
             </div>
         {% endif %}
 
@@ -145,11 +146,35 @@
                     <div class="product-body">
                         <h2 class="product-title">{{ package.name }}</h2>
                         <p class="product-description">{{ package.description }}</p>
-                        <div class="tour-meta">
-                            <div class="stock-line"><span class="stock-icon">⏱️</span><span>{{ package.package_type }}</span></div>
-                            <div class="stock-line"><span class="stock-icon">📍</span><span>{{ package.farm_area }}</span></div>
-                            <div class="stock-line"><span class="stock-icon">👥</span><span>{% if package.available_capacity > 0 and package.is_available %}{{ package.available_capacity }} במלאי{% else %}אזל מהמלאי{% endif %}</span></div>
-                        </div>
+                      <div class="tour-meta">
+    <div class="stock-line">
+        <span class="stock-icon">⏱️</span>
+        <span>{{ package.package_type }}</span>
+    </div>
+
+    <div class="stock-line">
+        <span class="stock-icon">📍</span>
+        <span>{{ package.farm_area }}</span>
+    </div>
+
+    {% if package.tour_datetime %}
+    <div class="stock-line">
+        <span class="stock-icon">📅</span>
+        <span>{{ package.tour_datetime|date:"d/m/Y H:i" }}</span>
+    </div>
+    {% endif %}
+
+    <div class="stock-line">
+        <span class="stock-icon">👥</span>
+        <span>
+            {% if package.available_capacity > 0 and package.is_available %}
+                {{ package.available_capacity }} במלאי
+            {% else %}
+                אזל מהמלאי
+            {% endif %}
+        </span>
+    </div>
+</div>
                         <div class="product-divider"></div>
                         <div class="product-bottom">
                             <div class="product-price">
@@ -262,7 +287,7 @@
 
     <div class="cart-summary">
         <div class="summary-row"><span>סה"כ</span><span class="summary-total">₪{{ cart_total }}</span></div>
-        <a href="{% url 'my_orders' %}" class="checkout-button">המשך לתשלום</a>
+<a href="{% url 'payment_page' %}" class="checkout-button">המשך לתשלום</a>
         <button type="button" class="continue-shopping" data-cart-close>המשך בקנייה</button>
     </div>
 </aside>

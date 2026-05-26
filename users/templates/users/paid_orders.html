@@ -1,0 +1,227 @@
+{% include 'includes/site_navbar.html' %}
+
+<div class="paid-orders-page" dir="rtl">
+    <h1>ההזמנות שלי</h1>
+{% if messages %}
+    {% for message in messages %}
+        <div class="paid-orders-message {{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+    <div class="paid-orders-card">
+        {% if paid_orders %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>שם החבילה</th>
+                        <th>📅 תאריך סיור</th>
+                        <th>מחיר</th>
+                        <th>סטטוס</th>
+                        <th>תאריך הזמנה</th>
+                        <th>פעולה</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for order in paid_orders %}
+                        <tr id="paid-order-row-{{ order.id }}">
+                           <td>{{ order.package_name }}</td>
+
+<td>
+    {% if order.package.tour_datetime %}
+        {{ order.package.tour_datetime|date:"d/m/Y H:i" }}
+    {% else %}
+        טרם נקבע
+    {% endif %}
+</td>
+
+<td>₪{{ order.package.price }}</td>
+                            <td class="paid-status">שולם</td>
+                            <td>{{ order.reserved_at|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <button type="button"
+                                        class="cancel-paid-order"
+                                        data-order-id="{{ order.id }}">
+                                    ביטול הזמנה
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div id="paid-orders-message" class="paid-orders-message"></div>
+
+        {% else %}
+            <div class="empty-paid-orders">
+                <h3>אין הזמנות ששולמו</h3>
+                <p>לא נמצאו הזמנות שבוצע עבורן תשלום.</p>
+                <a href="{% url 'packages' %}">לחיפוש חבילות</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.paid-orders-page {
+    min-height: calc(100vh - 90px);
+    padding: 80px 8%;
+    background: #fff;
+    color: #151515;
+}
+
+.paid-orders-page h1 {
+    text-align: right;
+    font-size: 42px;
+    margin-bottom: 50px;
+    font-weight: 800;
+}
+
+.paid-orders-card {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 28px;
+    padding: 45px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.06);
+}
+
+.paid-orders-card table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.paid-orders-card th,
+.paid-orders-card td {
+    padding: 18px;
+    border-bottom: 1px solid #eee;
+    text-align: right;
+}
+
+.paid-orders-card th {
+    background: #fafafa;
+    font-weight: 800;
+}
+
+.paid-status {
+    color: #d71920;
+    font-weight: 800;
+}
+
+.cancel-paid-order {
+    background: #d71920;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.cancel-paid-order:hover {
+    background: #b9151b;
+}
+
+.paid-orders-message {
+    margin-top: 22px;
+    padding: 14px;
+    border-radius: 14px;
+    font-weight: 700;
+    display: none;
+}
+
+.paid-orders-message.success {
+    display: block;
+    background: #f0fff4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.paid-orders-message.error {
+    display: block;
+    background: #fff3f3;
+    color: #d71920;
+    border: 1px solid #ffd5d5;
+}
+
+.empty-paid-orders {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-paid-orders a {
+    display: inline-block;
+    margin-top: 20px;
+    background: #d71920;
+    color: white;
+    padding: 14px 30px;
+    border-radius: 16px;
+    text-decoration: none;
+    font-weight: 700;
+}
+</style>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+
+    return cookieValue;
+}
+
+function showPaidOrdersMessage(text, type) {
+    const messageBox = document.getElementById('paid-orders-message');
+
+    if (!messageBox) return;
+
+    messageBox.textContent = text;
+    messageBox.className = 'paid-orders-message ' + type;
+}
+
+document.addEventListener('click', async function(event) {
+    const button = event.target.closest('.cancel-paid-order');
+
+    if (!button) return;
+
+    const confirmCancel = confirm('האם את בטוחה שברצונך לבטל את ההזמנה?');
+
+    if (!confirmCancel) return;
+
+    const orderId = button.dataset.orderId;
+
+    const response = await fetch(`/api/user/packages/${orderId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Accept': 'application/json'
+        }
+    });
+
+    if (response.ok) {
+        const row = document.getElementById('paid-order-row-' + orderId);
+
+        if (row) {
+            row.remove();
+        }
+
+        showPaidOrdersMessage('ההזמנה בוטלה בהצלחה.', 'success');
+    } else {
+        showPaidOrdersMessage('לא ניתן לבטל את ההזמנה. ייתכן שזמן הביטול עבר.', 'error');
+    }
+});
+</script>

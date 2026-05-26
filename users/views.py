@@ -1,6 +1,5 @@
-
-import re
 from datetime import timedelta
+import re
 from decimal import Decimal, InvalidOperation
 from django.db import transaction
 from django.views.decorators.cache import never_cache
@@ -17,7 +16,7 @@ from .models import User, Package, CartItem, Discount
 from .cancellation import assert_cancellation_window_open, cancellation_deadline, is_cancellation_window_open
 from .exceptions import TimeExpired
 from .reservations import release_expired_reservations
-from .email import send_package_cancellation_email
+from .email import send_package_cancellation_email, send_order_success_email
 from django.contrib import messages
 
 def is_strong_password(password):
@@ -340,7 +339,7 @@ def cart_view(request):
             })
 
     path = request.path.rstrip('/')
-    page_heading = 'הזמנות של משתמשים' if is_admin else ('ההזמנות שלי' if path.endswith('my-orders') else 'עגלתי')
+    page_heading = 'הזמנות של משתמשים' if is_admin else ('ההזמנה שלי' if path.endswith('my-orders') else 'עגלתי')
 
     return render(request, 'users/cart.html', {
         'orders': orders,
@@ -349,7 +348,6 @@ def cart_view(request):
         'is_admin': is_admin,
         **cart_context,
     })
-
 
 def edit_package(request, package_id):
     user = _get_logged_in_user(request)
@@ -369,6 +367,8 @@ def edit_package(request, package_id):
         image = request.FILES.get('image')
         capacity = request.POST.get('capacity', '0').strip()
         reservation_minutes = request.POST.get('reservation_minutes', '15').strip()
+        tour_datetime = request.POST.get('tour_datetime') or None
+        cancellation_hours = request.POST.get('cancellation_hours', '24').strip()
 
         if not name:
             error_message = 'שם החבילה חובה.'
@@ -379,9 +379,12 @@ def edit_package(request, package_id):
                 price_value = Decimal(price)
                 capacity_value = int(capacity) if capacity else 0
                 reservation_value = int(reservation_minutes) if reservation_minutes else 15
+                cancellation_value = int(cancellation_hours) if cancellation_hours else 24
 
                 if reservation_value < 1 or reservation_value > 10080:
                     error_message = 'זמן שמירה חייב להיות בין 1 ל-10080 דקות.'
+                elif cancellation_value < 1:
+                    error_message = 'זמן הביטול חייב להיות לפחות שעה אחת.'
                 else:
                     package.name = name
                     package.description = description
@@ -390,10 +393,18 @@ def edit_package(request, package_id):
                     package.farm_area = farm_area
                     package.capacity = capacity_value
                     package.reservation_minutes = reservation_value
+                    package.tour_datetime = tour_datetime
+                    package.cancellation_hours = cancellation_value
+
                     if image:
                         package.image = image
+
                     package.save()
-                    return redirect(f"{reverse('edit_package', kwargs={'package_id': package_id})}?success=updated")
+
+                    return redirect(
+                        f"{reverse('edit_package', kwargs={'package_id': package_id})}?success=updated"
+                    )
+
             except (InvalidOperation, ValueError):
                 error_message = 'ערכים לא תקינים.'
 
@@ -406,7 +417,6 @@ def edit_package(request, package_id):
         'success_message': success_message,
         'active_discount': active_discount,
     })
-
 
 def admin_packages(request):
     user = _get_logged_in_user(request)
@@ -425,6 +435,8 @@ def admin_packages(request):
         farm_area = request.POST.get('farm_area', '').strip()
         image = request.FILES.get('image')
         capacity = request.POST.get('capacity', '0').strip()
+        tour_datetime = request.POST.get('tour_datetime') or None
+        cancellation_hours = request.POST.get('cancellation_hours', '24').strip()
 
         if not name:
             error_message = 'שם החבילה חובה.'
@@ -434,17 +446,25 @@ def admin_packages(request):
             try:
                 price_value = Decimal(price)
                 capacity_value = int(capacity) if capacity else 0
+                cancellation_value = int(cancellation_hours) if cancellation_hours else 24
 
-                Package.objects.create(
-                    name=name,
-                    description=description,
-                    price=price_value,
-                    package_type=package_type,
-                    farm_area=farm_area,
-                    image=image,
-                    capacity=capacity_value,
-                )
-                return redirect(f"{reverse('admin_packages_view')}?success=added")
+                if cancellation_value < 1:
+                    error_message = 'זמן הביטול חייב להיות לפחות שעה אחת.'
+                else:
+                    Package.objects.create(
+                        name=name,
+                        description=description,
+                        price=price_value,
+                        package_type=package_type,
+                        farm_area=farm_area,
+                        image=image,
+                        capacity=capacity_value,
+                        tour_datetime=tour_datetime,
+                        cancellation_hours=cancellation_value,
+                    )
+
+                    return redirect(f"{reverse('admin_packages_view')}?success=added")
+
             except (InvalidOperation, ValueError):
                 error_message = 'ערכים לא תקינים.'
 
@@ -454,7 +474,6 @@ def admin_packages(request):
         'error_message': error_message,
         'success_message': success_message,
     })
-
 
 def promotion_management(request):
     user = _get_logged_in_user(request)
@@ -564,6 +583,9 @@ def promotion_management(request):
     })
 
 
+
+
+
 @csrf_exempt
 def cancel_user_package(request, order_id):
     if request.method != 'DELETE':
@@ -574,34 +596,38 @@ def cancel_user_package(request, order_id):
         return JsonResponse({'error': 'authentication_required'}, status=403)
 
     try:
-        order = CartItem.objects.get(id=order_id)
+        order = CartItem.objects.select_related('package', 'user').get(id=order_id)
     except CartItem.DoesNotExist:
         return JsonResponse({'error': 'not_found'}, status=404)
 
     is_admin = user.role == 'admin'
 
-    # Regular users can cancel only their own package.
-    # Admin can cancel any user's package.
+    # משתמש רגיל יכול לבטל רק הזמנה שלו.
+    # אדמין יכול לבטל כל הזמנה.
     if not is_admin and order.user_id != user.id:
         return JsonResponse({'error': 'forbidden'}, status=403)
 
-    if order.status != 'Reserved':
+    # אפשר לבטל רק הזמנות פעילות או ששולמו.
+    if order.status not in ['Reserved', 'Paid']:
         return JsonResponse({'error': 'already_cancelled'}, status=400)
 
-    try:
-        # Admin ignores the time limit.
-        assert_cancellation_window_open(
-            order.reserved_at,
-            is_admin=is_admin
-        )
-    except TimeExpired:
-        return JsonResponse({'error': 'TimeExpired'}, status=400)
+    # אדמין יכול לבטל בלי מגבלת זמן.
+    if not is_admin:
+        package = order.package
+
+        # אם אין תאריך סיור, אי אפשר לבדוק חלון ביטול.
+        if not package.tour_datetime:
+            return JsonResponse({'error': 'missing_tour_datetime'}, status=400)
+
+        cancel_deadline = package.tour_datetime - timedelta(hours=package.cancellation_hours)
+
+        if timezone.now() > cancel_deadline:
+            return JsonResponse({'error': 'TimeExpired'}, status=400)
 
     order.status = 'Cancelled'
     order.save()
 
     try:
-        # Send email to the user who owns the order, not necessarily the admin.
         send_package_cancellation_email(order.user, order.package_name)
     except Exception:
         pass
@@ -614,6 +640,11 @@ def cancel_user_package(request, order_id):
         'cart_total': float(cart_context['cart_total']),
         'cart_count': cart_context['cart_count'],
     })
+
+
+
+
+
 
 
 def login_view(request):
@@ -711,3 +742,121 @@ def delete_package(request, package_id):
         return JsonResponse({'status': 'deleted', 'id': package_id})
 
     return redirect('/admin/packages/')
+
+
+#תשלום וביצוע ההזמנה!!
+
+def payment_page(request):
+    user = _get_logged_in_user(request)
+
+    if not user:
+        return redirect('home')
+
+    cart_items = CartItem.objects.filter(
+        user=user,
+        status='Reserved'
+    ).select_related('package')
+
+    total_price = sum(item.package.price for item in cart_items)
+
+    return render(request, 'users/payment.html', {
+        'cart_items': cart_items,
+        'full_name': user.full_name,
+        'total_price': total_price,
+    })
+
+
+
+import re
+from datetime import datetime
+from django.contrib import messages
+
+
+def complete_payment(request):
+    user = _get_logged_in_user(request)
+
+    if not user:
+        return redirect('home')
+
+    if request.method == 'POST':
+
+        card_number = request.POST.get('card_number', '').replace(' ', '')
+        expiry = request.POST.get('expiry', '').strip()
+        cvv = request.POST.get('cvv', '').strip()
+
+        # בדיקת מספר כרטיס
+        if not re.fullmatch(r'\d{16}', card_number):
+            messages.error(request, 'מספר כרטיס חייב להכיל 16 ספרות')
+            return redirect('payment_page')
+
+        # בדיקת CVV
+        if not re.fullmatch(r'\d{3}', cvv):
+            messages.error(request, 'CVV חייב להכיל 3 ספרות')
+            return redirect('payment_page')
+
+        # בדיקת תוקף
+        if not re.fullmatch(r'(0[1-9]|1[0-2])\/\d{2}', expiry):
+            messages.error(request, 'תוקף הכרטיס לא תקין')
+            return redirect('payment_page')
+
+        # בדיקה שהתוקף לא עבר
+        try:
+            month, year = expiry.split('/')
+            month = int(month)
+            year = int('20' + year)
+
+            now = datetime.now()
+
+            if year < now.year or (year == now.year and month < now.month):
+                messages.error(request, 'הכרטיס פג תוקף')
+                return redirect('payment_page')
+
+        except:
+            messages.error(request, 'תוקף הכרטיס לא תקין')
+            return redirect('payment_page')
+
+        # בדיקת שכל השדות מלאים
+        if not card_number or not expiry or not cvv:
+            messages.error(request, 'יש למלא את כל פרטי האשראי')
+            return redirect('payment_page')
+
+        # עדכון ההזמנות
+        cart_items = CartItem.objects.filter(
+            user=user,
+            status='Reserved'
+        )
+
+        for item in cart_items:
+            item.status = 'Paid'
+            item.save()
+
+        # שליחת מייל
+        try:
+           send_order_success_email(user)
+           messages.success(request, 'התשלום בוצע בהצלחה ונשלח מייל אישור.')
+        except Exception as e:
+            messages.warning(request, f'התשלום בוצע, אבל שליחת המייל נכשלה: {e}')
+
+        return redirect('paid_orders')
+
+    return redirect('payment_page')
+
+
+#דף מציג ההזמנות ששולמו
+def paid_orders_view(request):
+    user = _get_logged_in_user(request)
+
+    if not user:
+        return redirect('home')
+
+    paid_orders = CartItem.objects.filter(
+        user=user,
+        status='Paid'
+    ).select_related('package').order_by('-reserved_at')
+
+    return render(request, 'users/paid_orders.html', {
+        'paid_orders': paid_orders,
+        'full_name': user.full_name,
+        'user_role': user.role,
+        'is_authenticated': True,
+    })

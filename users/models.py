@@ -28,10 +28,24 @@ class Package(models.Model):
     image = models.ImageField(upload_to='packages/', blank=True, null=True)
     capacity = models.PositiveIntegerField(default=0)
     is_available = models.BooleanField(default=True)
+
     reservation_minutes = models.PositiveIntegerField(
         default=15,
         db_column='ReservationMinutes',
         help_text='Minutes a user may hold this package in the cart without completing purchase.',
+    )
+
+    tour_datetime = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_column='TourDateTime',
+        help_text='Date and time of the tour.',
+    )
+
+    cancellation_hours = models.PositiveIntegerField(
+        default=24,
+        db_column='CancellationHours',
+        help_text='How many hours before the tour the user can cancel.',
     )
 
     def __str__(self):
@@ -117,10 +131,11 @@ class CartItem(models.Model):
         db_table = 'CartItems'
 
     STATUS_CHOICES = [
-        ('Reserved', 'Reserved'),
-        ('Cancelled', 'Cancelled'),
-        ('Expired', 'Expired'),
-    ]
+    ('Reserved', 'Reserved'),
+    ('Paid', 'Paid'),
+    ('Cancelled', 'Cancelled'),
+    ('Expired', 'Expired'),
+]
 
     user = models.ForeignKey(
         User,

@@ -369,14 +369,37 @@
                     <input id="farm_area" name="farm_area" type="text" placeholder="לדוגמה: דרום" />
                 </div>
             </div>
-            <div class="form-row">
-                <div>
-                    <label for="capacity">קיבולת</label>
-                    <input id="capacity" name="capacity" type="number" min="0" placeholder="מספר משתמשים מקסימלי" />
-                </div>
-                <div>
-                    <label for="image">תמונת החבילה</label>
-                    <input id="image" name="image" type="file" accept="image/*" />
+<div class="form-row">
+    <div>
+        <label for="capacity">קיבולת</label>
+        <input id="capacity"
+               name="capacity"
+               type="number"
+               min="0"
+               placeholder="מספר משתמשים מקסימלי" />
+    </div>
+
+    <div>
+        <label for="tour_datetime">תאריך ושעת סיור</label>
+        <input id="tour_datetime"
+               name="tour_datetime"
+               type="datetime-local" />
+    </div>
+</div>
+
+<div class="form-row">
+    <div>
+        <label for="cancellation_hours">כמה שעות לפני הסיור ניתן לבטל</label>
+        <input id="cancellation_hours"
+               name="cancellation_hours"
+               type="number"
+               min="1"
+               value="24" />
+    </div>
+
+    <div>
+        <label for="image">תמונת החבילה</label>
+        <input id="image" name="image" type="file" accept="image/*" />
                     <div class="image-name" id="image-name"></div>
                     <div class="image-preview" id="image-preview">
                         <img id="image-preview-img" src="" alt="תמונה מקדימה" />
@@ -405,6 +428,7 @@
                 <tr>
                     <th>📦 שם החבילה</th>
                     <th>💰 מחיר</th>
+                    <th>📅 תאריך סיור</th>
                     <th>🎯 סוג</th>
                     <th>📍 אזור</th>
                     <th>👥 קיבולת</th>
@@ -419,6 +443,14 @@
                             <div class="package-info">{{ package.description|truncatewords:10 }}</div>
                         </td>
                         <td>₪{{ package.price }}</td>
+                        <td>
+    {% if package.tour_datetime %}
+        {{ package.tour_datetime|date:"d/m/Y H:i" }}
+    {% else %}
+        טרם נקבע
+    {% endif %}
+</td>
+
                         <td>{{ package.package_type|default:"-" }}</td>
                         <td>{{ package.farm_area|default:"-" }}</td>
                         <td>{{ package.capacity|default:"-" }}</td>
@@ -438,7 +470,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 24px; color: var(--muted);">אין חבילות כרגע.</td>
+                        <td colspan="7" style="text-align: center; padding: 24px; color: var(--muted);">אין חבילות כרגע.</td>
                     </tr>
                 {% endfor %}
             </tbody>
