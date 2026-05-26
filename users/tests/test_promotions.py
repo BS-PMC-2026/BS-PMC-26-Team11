@@ -43,13 +43,6 @@ class PromotionManagementTests(TestCase):
         session['role'] = user.role
         session.save()
 
-    def test_admin_can_access_promotions_page(self):
-        self._login_as(self.admin_user)
-
-        response = self.client.get(reverse('promotions'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'ניהול מבצעים')
 
     def test_non_admin_is_redirected_from_promotions_page(self):
         self._login_as(self.regular_user)

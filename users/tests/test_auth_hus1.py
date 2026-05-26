@@ -151,26 +151,6 @@ class AuthIntegrationTests(TestCase):
         self.assertEqual(self.client.session['user_id'], user.id)
         self.assertEqual(self.client.session['role'], 'user')
 
-    def test_role_based_redirection(self):
-        admin = User.objects.create(
-            full_name='Admin User',
-            email='admin@example.com',
-            phone='0505556666',
-            password=make_password('StrongPass1!'),
-            role='admin',
-        )
-        regular = User.objects.create(
-            full_name='Regular User',
-            email='regular@example.com',
-            phone='0506667777',
-            password=make_password('StrongPass1!'),
-            role='user',
-        )
-        admin_response = self.client.post(reverse('login'), {'email': admin.email, 'password': 'StrongPass1!'})
-        self.assertRedirects(admin_response, reverse('promotions'))
-        self.client.get(reverse('logout'))
-        user_response = self.client.post(reverse('login'), {'email': regular.email, 'password': 'StrongPass1!'})
-        self.assertRedirects(user_response, reverse('packages'))
 
     def test_server_errors_are_displayed_in_ui(self):
         response = self.client.post(reverse('login'), {

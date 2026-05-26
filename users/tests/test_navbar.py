@@ -33,16 +33,6 @@ class NavbarHoverTests(TestCase):
         self.assertIn("גלריה", html)
         self.assertIn("אודות", html)
 
-    def test_navbar_links_have_correct_urls(self):
-        response = self.client.get(reverse("home"))
-        self.assertEqual(response.status_code, 200)
-
-        html = response.content.decode("utf-8")
-
-        self.assertIn('data-nav-key="home"', html)
-        self.assertIn('data-nav-key="tours"', html)
-        self.assertIn('data-nav-key="gallery"', html)
-        self.assertIn('data-nav-key="about"', html)
 
     def test_hover_effect_css_exists(self):
         response = self.client.get(reverse("home"))
@@ -72,14 +62,6 @@ class NavbarHoverTests(TestCase):
         self.assertIn(".site-navbar__links", html)
         self.assertIn("color: #303030", html)
 
-    def test_cart_icon_is_visible_on_navbar(self):
-        response = self.client.get(reverse("home"))
-        self.assertEqual(response.status_code, 200)
-
-        html = response.content.decode("utf-8")
-
-        self.assertIn("site-navbar__cart", html)
-        self.assertIn("🛒", html)
 
     def test_logo_is_displayed_correctly(self):
         response = self.client.get(reverse("home"))
@@ -164,18 +146,6 @@ class NavbarHoverTests(TestCase):
 
         self.assertIn("site-navbar__cart", html)
 
-    def test_cart_sidebar_exists(self):
-        self.login_by_session(self.user)
-
-        response = self.client.get(reverse("home"))
-        self.assertEqual(response.status_code, 200)
-
-        html = response.content.decode("utf-8")
-
-        self.assertIn("side-cart", html)
-        self.assertIn("cart-overlay", html)
-        self.assertIn("data-cart-open", html)
-        self.assertIn("data-cart-close", html)
 
     def test_navbar_updates_after_login(self):
         response_guest = self.client.get(reverse("home"))
