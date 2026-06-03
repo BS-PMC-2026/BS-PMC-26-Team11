@@ -860,3 +860,34 @@ def paid_orders_view(request):
         'user_role': user.role,
         'is_authenticated': True,
     })
+
+
+def admin_users_list(request):
+    user = _get_logged_in_user(request)
+    if not user or user.role != 'admin':
+        return render(request, 'error.html', {'status_code': 403}, status=403)
+
+    users = User.objects.all().order_by('-id')
+    return render(request, 'users/admin_users_list.html', {
+        'users': users,
+        'full_name': user.full_name,
+        'user_role': user.role,
+    })
+
+
+@csrf_exempt
+def admin_delete_user(request, user_id):
+    user = _get_logged_in_user(request)
+    if not user or user.role != 'admin':
+        return JsonResponse({'error': 'forbidden'}, status=403)
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method_not_allowed'}, status=405)
+
+    try:
+        target_user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'not_found'}, status=404)
+
+    target_user.delete()
+    return JsonResponse({'status': 'deleted'}, status=200)
