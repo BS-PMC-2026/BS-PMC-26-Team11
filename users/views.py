@@ -706,12 +706,14 @@ def admin_dashboard(request):
     total_orders = CartItem.objects.filter(status='Reserved').count()
     total_users = User.objects.filter(role='user').count()
     total_packages = Package.objects.count()
+    users = User.objects.all().order_by('-id')
 
     return render(request, 'users/admin_dashboard.html', {
         'full_name': user.full_name,
         'total_orders': total_orders,
         'total_users': total_users,
         'total_packages': total_packages,
+        'users': users,
     })
 
     return render(request, 'users/login.html')

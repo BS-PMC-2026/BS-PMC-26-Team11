@@ -197,6 +197,76 @@
             font-size: 14px;
         }
 
+        .section-title {
+            font-size: 24px;
+            font-weight: 900;
+            margin: 48px 0 24px 0;
+            color: var(--text);
+        }
+
+        .users-table-wrapper {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table thead {
+            background: var(--soft);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .users-table th {
+            padding: 16px 20px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .users-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .users-table tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .users-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .delete-btn {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            transition: background 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: var(--red-dark);
+        }
+
+        .empty-message {
+            padding: 32px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
         @media (max-width: 1150px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .menu-grid { grid-template-columns: 1fr; }
@@ -226,6 +296,7 @@
             <a href="{% url 'admin_dashboard' %}">לוח בקרה</a>
             <a href="{% url 'package_reservation_admin' %}">זמן שמירה בעגלה</a>
             <a href="{% url 'promotions' %}">הגדרת מבצעים</a>
+            <a href="{% url 'admin_users_list' %}">משתמשים</a>
         </div>
 
         <div class="navbar-actions">
@@ -289,6 +360,113 @@
             </div>
         </a>
     </div>
+
+    <h2 class="section-title">ניהול משתמשים</h2>
+    <div class="users-table-wrapper">
+        {% if users %}
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>שם מלא</th>
+                        <th>אימייל</th>
+                        <th>טלפון</th>
+                        <th>סוג משתמש</th>
+                        <th>פעולה</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr data-user-id="{{ user.id }}">
+                            <td>{{ user.full_name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.phone }}</td>
+                            <td>
+                                {% if user.role == 'admin' %}
+                                    <span style="color: var(--red); font-weight: 700;">מנהל</span>
+                                {% else %}
+                                    משתמש
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.role != 'admin' %}
+                                    <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">
+                                        מחק
+                                    </button>
+                                {% else %}
+                                    <span style="color: var(--muted); font-size: 13px;">לא ניתן למחוק</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        {% if user.role != 'admin' %}
+                        <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content" style="border-radius: 18px; border: 1px solid var(--border);">
+                                    <div class="modal-header" style="background: var(--soft); border-bottom: 1px solid var(--border);">
+                                        <h5 class="modal-title" style="font-weight: 700; color: var(--text);">אישור מחיקה</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: none;"></button>
+                                    </div>
+                                    <div class="modal-body" style="color: var(--text);">
+                                        <p>האם אתה בטוח שברצונך למחוק את המשתמש <strong>{{ user.full_name }}</strong>?</p>
+                                        <p style="color: var(--muted); font-size: 13px;">פעולה זו לא ניתנת לביטול.</p>
+                                    </div>
+                                    <div class="modal-footer" style="border-top: 1px solid var(--border);">
+                                        <button type="button" class="btn" data-bs-dismiss="modal" style="background: var(--soft); color: var(--text);">ביטול</button>
+                                        <button type="button" class="btn" onclick="deleteUser({{ user.id }})" style="background: var(--red); color: white;">מחק</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-message">
+                אין משתמשים רשומים
+            </div>
+        {% endif %}
+    </div>
 </div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    async function deleteUser(userId) {
+        const modal = bootstrap.Modal.getInstance(
+            document.getElementById(`deleteModal${userId}`)
+        );
+
+        try {
+            const response = await fetch(
+                `/admin-panel/users/${userId}/delete/`,
+                { method: 'POST' }
+            );
+
+            if (response.ok) {
+                if (modal) modal.hide();
+                const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+                if (row) {
+                    row.style.opacity = '0.5';
+                    setTimeout(() => row.remove(), 300);
+                }
+            } else if (response.status === 404) {
+                if (modal) modal.hide();
+                alert('המשתמש לא קיים');
+                location.reload();
+            } else if (response.status === 403) {
+                if (modal) modal.hide();
+                alert('אין לך הרשאה למחוק משתמשים');
+            } else {
+                if (modal) modal.hide();
+                alert('שגיאה בעת מחיקת המשתמש');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            if (modal) modal.hide();
+            alert('שגיאה בעת מחיקת המשתמש');
+        }
+    }
+</script>
 </body>
 </html>
