@@ -159,10 +159,12 @@
         }
 
         .users-section {
-            grid-column: 1 / -1;
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
+            margin-top: 48px;
+        }
+
+        .users-section .section-title {
+            margin-top: 0;
+            margin-bottom: 24px;
         }
 
         .menu-card {
@@ -303,7 +305,6 @@
             <a href="{% url 'admin_dashboard' %}">לוח בקרה</a>
             <a href="{% url 'package_reservation_admin' %}">זמן שמירה בעגלה</a>
             <a href="{% url 'promotions' %}">הגדרת מבצעים</a>
-            <a href="{% url 'admin_users_list' %}">משתמשים</a>
         </div>
 
         <div class="navbar-actions">
@@ -366,10 +367,11 @@
                 <p>צפייה בהזמנות ופעולות פעילות של כל המשתמשים</p>
             </div>
         </a>
+    </div>
 
-        <div class="users-section">
-            <h2 class="section-title">ניהול משתמשים</h2>
-            <div class="users-table-wrapper">
+    <div class="users-section">
+        <h2 class="section-title">משתמשים רשומים</h2>
+        <div class="users-table-wrapper">
         {% if users %}
             <table class="users-table">
                 <thead>
@@ -433,7 +435,6 @@
                 אין משתמשים רשומים
             </div>
         {% endif %}
-            </div>
         </div>
     </div>
 </div>
