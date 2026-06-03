@@ -158,6 +158,13 @@
             gap: 24px;
         }
 
+        .users-section {
+            grid-column: 1 / -1;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
         .menu-card {
             background: #fff;
             border: 1px solid var(--border);
@@ -359,10 +366,10 @@
                 <p>צפייה בהזמנות ופעולות פעילות של כל המשתמשים</p>
             </div>
         </a>
-    </div>
 
-    <h2 class="section-title">ניהול משתמשים</h2>
-    <div class="users-table-wrapper">
+        <div class="users-section">
+            <h2 class="section-title">ניהול משתמשים</h2>
+            <div class="users-table-wrapper">
         {% if users %}
             <table class="users-table">
                 <thead>
@@ -426,6 +433,8 @@
                 אין משתמשים רשומים
             </div>
         {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 
