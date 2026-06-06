@@ -5,7 +5,7 @@
         <h1>התחל סיור</h1>
         <p>
             הזינו את קוד הגישה שקיבלתם במייל לאחר הרכישה.
-            לאחר האישור תוכלו לסרוק קודי QR בחווה ולקבל מידע על החבילה והאזורים השונים.
+            לאחר האישור תוכלו לסרוק קודי QR בחווה ולקבל מידע על הדינרים והסוגים השונים.
         </p>
 
         {% if error_message %}
@@ -26,7 +26,7 @@
 
             <div id="reader"></div>
             <div id="qr-result">סרקו QR כדי לראות מידע נוסף.</div>
-
+<!-- אפשרות לסורק דרך ה JAVA מקבלים אותו  -->
             <script src="https://unpkg.com/html5-qrcode"></script>
             <script>
                 function onScanSuccess(decodedText) {
