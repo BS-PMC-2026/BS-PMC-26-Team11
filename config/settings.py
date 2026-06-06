@@ -104,11 +104,14 @@ DATABASES = {
     }
 }
 
-if os.getenv("GITHUB_ACTIONS") == "true":
-    DATABASES["default"]["TEST"] = {
-        "MIRROR": "default"
+# Use SQLite only when running tests in GitHub Actions
+if os.getenv("USE_SQLITE_FOR_TESTS") == "true":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "test_db.sqlite3",
+        }
     }
-
 
 
 # Password validation
