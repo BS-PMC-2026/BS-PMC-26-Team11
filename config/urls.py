@@ -23,6 +23,11 @@ from users.views import (
     complete_payment,
     start_tour_view,
     delete_package,
+    scan_pepper_info,
+    delete_pepper,
+    admin_peppers,
+    edit_pepper,
+
 )
 
 def signup_success(request):
@@ -52,7 +57,11 @@ urlpatterns = [
     path('paid-orders/', paid_orders_view, name='paid_orders'),
     path('signup-success/', signup_success, name='signup_success'),
     path('start-tour/', start_tour_view, name='start_tour'),
-]
+    path('api/peppers/scan/', scan_pepper_info, name='scan_pepper_info'),
+    path('dashboard/peppers/', admin_peppers, name='admin_peppers'),
+    path('dashboard/peppers/<int:pepper_id>/delete/', delete_pepper, name='delete_pepper'),
+    path('dashboard/peppers/<int:pepper_id>/edit/', edit_pepper, name='edit_pepper'),
 
+]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

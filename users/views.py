@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse, HttpResponseNotAllowed
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from .models import User, Package, CartItem, Discount
+from .models import User, Package, CartItem, Discount, PepperType
 from .cancellation import assert_cancellation_window_open, cancellation_deadline, is_cancellation_window_open
 from .exceptions import TimeExpired
 from .reservations import release_expired_reservations
@@ -476,6 +476,157 @@ def admin_packages(request):
         'success_message': success_message,
     })
 
+
+
+
+def admin_peppers(request):
+    user = _get_logged_in_user(request)
+
+    if not _is_admin(user):
+        return redirect('home')
+
+    error_message = None
+    success_message = request.GET.get('success')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        spiciness_level = request.POST.get('spiciness_level', '1').strip()
+        origin = request.POST.get('origin', '').strip()
+        usage = request.POST.get('usage', '').strip()
+        fun_fact = request.POST.get('fun_fact', '').strip()
+        guide_text = request.POST.get('guide_text', '').strip()
+        image = request.FILES.get('image')
+
+        if not name:
+            error_message = 'שם הפלפל חובה.'
+        elif not description:
+            error_message = 'תיאור הפלפל חובה.'
+        else:
+            try:
+                spiciness_value = int(spiciness_level)
+
+                if spiciness_value < 1 or spiciness_value > 10:
+                    error_message = 'רמת חריפות חייבת להיות בין 1 ל-10.'
+                else:
+                    PepperType.objects.create(
+                        name=name,
+                        description=description,
+                        spiciness_level=spiciness_value,
+                        origin=origin,
+                        usage=usage,
+                        guide_text=guide_text,
+                        fun_fact=fun_fact,
+                        image=image,
+                    )
+
+                    return redirect(f"{reverse('admin_peppers')}?success=added")
+
+            except ValueError:
+                error_message = 'רמת החריפות חייבת להיות מספר.'
+
+    peppers = PepperType.objects.all().order_by('id')
+
+    return render(request, 'users/admin_peppers.html', {
+        'peppers': peppers,
+        'full_name': user.full_name,
+        'error_message': error_message,
+        'success_message': success_message,
+    })
+
+
+
+
+def delete_pepper(request, pepper_id):
+    user = _get_logged_in_user(request)
+
+    if not _is_admin(user):
+        return redirect('home')
+
+    if request.method != 'POST':
+        return redirect('admin_peppers')
+
+    pepper = get_object_or_404(PepperType, id=pepper_id)
+
+    if pepper.image:
+        pepper.image.delete(save=False)
+
+    pepper.delete()
+
+    return redirect(f"{reverse('admin_peppers')}?success=deleted")
+
+
+
+
+
+
+
+def edit_pepper(request, pepper_id):
+    user = _get_logged_in_user(request)
+
+    if not _is_admin(user):
+        return redirect('home')
+
+    pepper = get_object_or_404(PepperType, id=pepper_id)
+    error_message = None
+    success_message = request.GET.get('success')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        spiciness_level = request.POST.get('spiciness_level', '1').strip()
+        origin = request.POST.get('origin', '').strip()
+        usage = request.POST.get('usage', '').strip()
+        fun_fact = request.POST.get('fun_fact', '').strip()
+        guide_text = request.POST.get('guide_text', '').strip()
+        image = request.FILES.get('image')
+
+        if not name:
+            error_message = 'שם הפלפל חובה.'
+        elif not description:
+            error_message = 'תיאור הפלפל חובה.'
+        else:
+            try:
+                spiciness_value = int(spiciness_level)
+
+                if spiciness_value < 1 or spiciness_value > 10:
+                    error_message = 'רמת חריפות חייבת להיות בין 1 ל-10.'
+                else:
+                    pepper.name = name
+                    pepper.description = description
+                    pepper.spiciness_level = spiciness_value
+                    pepper.origin = origin
+                    pepper.usage = usage
+                    pepper.fun_fact = fun_fact
+                    pepper.guide_text = guide_text
+
+                    if image:
+                        pepper.image = image
+
+                    pepper.save()
+
+                    return redirect(
+                        f"{reverse('edit_pepper', kwargs={'pepper_id': pepper.id})}?success=updated"
+                    )
+
+            except ValueError:
+                error_message = 'רמת החריפות חייבת להיות מספר.'
+
+    return render(request, 'users/edit_pepper.html', {
+        'pepper': pepper,
+        'full_name': user.full_name,
+        'user_role': user.role,
+        'error_message': error_message,
+        'success_message': success_message,
+    })
+
+
+
+
+
+
+
+
 def promotion_management(request):
     user = _get_logged_in_user(request)
     if not _is_admin(user):
@@ -893,4 +1044,40 @@ def start_tour_view(request):
         'is_authenticated': True,
         'error_message': error_message,
         'verified_order': verified_order,
+    })
+
+#סריקת הפלפל
+
+@csrf_exempt
+def scan_pepper_info(request):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    user = _get_logged_in_user(request)
+    if not user:
+        return JsonResponse({'error': 'authentication_required'}, status=403)
+
+    code = request.POST.get('code', '').strip()
+
+    pepper = PepperType.objects.filter(
+        qr_code_value=code,
+        is_active=True
+    ).first()
+
+    if not pepper:
+        return JsonResponse({'error': 'pepper_not_found'}, status=404)
+
+    image_url = ''
+    if pepper.image:
+        image_url = pepper.image.url
+
+    return JsonResponse({
+        'name': pepper.name,
+        'description': pepper.description,
+        'spiciness_level': pepper.spiciness_level,
+        'origin': pepper.origin,
+        'usage': pepper.usage,
+        'fun_fact': pepper.fun_fact,
+        'guide_text': pepper.guide_text,
+        'image_url': image_url,
     })

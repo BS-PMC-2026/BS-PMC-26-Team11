@@ -3,6 +3,7 @@
 <div class="tour-page" dir="rtl">
     <section class="tour-card">
         <h1>התחל סיור</h1>
+
         <p>
             הזינו את קוד הגישה שקיבלתם במייל לאחר הרכישה.
             לאחר האישור תוכלו לסרוק קודי QR בחווה ולקבל מידע על הדינרים והסוגים השונים.
@@ -15,28 +16,201 @@
         {% if not verified_order %}
             <form method="post">
                 {% csrf_token %}
-                <label>קוד גישה לסיור</label>
-                <input type="text" name="access_code" inputmode="numeric" placeholder="לדוגמה: 123456" required>
+
+                <label for="access_code">קוד גישה לסיור</label>
+
+                <input
+                    id="access_code"
+                    type="text"
+                    name="access_code"
+                    inputmode="numeric"
+                    placeholder="לדוגמה: 123456"
+                    required
+                >
+
                 <button type="submit">כניסה לסיור</button>
             </form>
         {% else %}
             <div class="success">
-                הכניסה אושרה עבור: <strong>{{ verified_order.package_name }}</strong>
+                הכניסה אושרה עבור:
+                <strong>{{ verified_order.package_name }}</strong>
             </div>
 
             <div id="reader"></div>
-            <div id="qr-result">סרקו QR כדי לראות מידע נוסף.</div>
-<!-- אפשרות לסורק דרך ה JAVA מקבלים אותו  -->
+
+            <div id="qr-result">
+                סרקו QR כדי לראות מידע נוסף.
+            </div>
+
             <script src="https://unpkg.com/html5-qrcode"></script>
+
             <script>
-                function onScanSuccess(decodedText) {
+                let currentGuideText = '';
+
+                async function onScanSuccess(decodedText) {
+                    const resultBox = document.getElementById('qr-result');
+
+                    resultBox.innerHTML = `
+                        <div class="loading-message">
+                            טוען מידע...
+                        </div>
+                    `;
+
+                    const formData = new FormData();
+                    formData.append('code', decodedText);
+
+                    try {
+                        const response = await fetch("{% url 'scan_pepper_info' %}", {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            resultBox.innerHTML = `
+                                <div class="pepper-error">
+                                    לא נמצא מידע עבור הקוד שנסרק.
+                                </div>
+                            `;
+                            return;
+                        }
+
+                        currentGuideText =
+                            data.guide_text ||
+                            `
+                            ברוכים הבאים לאזור ${data.name}.
+                            מקור הפלפל הוא ${data.origin || 'לא צוין'}.
+                            ${data.description || ''}
+                            ${data.usage || ''}
+                            ${data.fun_fact || ''}
+                            `;
+
+                        resultBox.innerHTML = `
+                            <div class="pepper-info-card">
+                                ${
+                                    data.image_url
+                                        ? `<img src="${data.image_url}" class="pepper-info-image" alt="${data.name}">`
+                                        : ''
+                                }
+
+                                <h2>${data.name}</h2>
+
+                                <div class="pepper-meta">
+                                    <span>🌶️ רמת חריפות: ${data.spiciness_level}/10</span>
+                                    <span>📍 מקור: ${data.origin || 'לא צוין'}</span>
+                                </div>
+
+                                <p class="pepper-description">
+                                    ${data.description}
+                                </p>
+
+                                ${
+                                    data.usage
+                                        ? `
+                                            <div class="pepper-section">
+                                                <strong>שימושים:</strong>
+                                                <p>${data.usage}</p>
+                                            </div>
+                                          `
+                                        : ''
+                                }
+
+                                ${
+                                    data.fun_fact
+                                        ? `
+                                            <div class="pepper-section">
+                                                <strong>עובדה מעניינת:</strong>
+                                                <p>${data.fun_fact}</p>
+                                            </div>
+                                          `
+                                        : ''
+                                }
+
+                                ${
+                                    data.guide_text
+                                        ? `
+                                            <div class="pepper-section guide-preview">
+                                                <strong>טקסט מדריך:</strong>
+                                                <p>${data.guide_text}</p>
+                                            </div>
+                                          `
+                                        : ''
+                                }
+
+                                <div class="pepper-buttons">
+                                    <button
+                                        type="button"
+                                        class="guide-audio-btn"
+                                        onclick="readGuide()"
+                                    >
+                                        🎧 האזן למדריך
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="stop-audio-btn"
+                                        onclick="stopGuide()"
+                                    >
+                                         עצור
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="back-to-scan-btn"
+                                        onclick="resetPepperResult()"
+                                    >
+                                        חזרה לסריקה
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    } catch (error) {
+                        resultBox.innerHTML = `
+                            <div class="pepper-error">
+                                אירעה שגיאה בעת טעינת מידע הפלפל.
+                            </div>
+                        `;
+                    }
+                }
+
+                function resetPepperResult() {
+                    stopGuide();
+                    currentGuideText = '';
                     document.getElementById('qr-result').innerHTML =
-                        '<strong>תוצאה:</strong><br>' + decodedText;
+                        'סרקו QR כדי לראות מידע נוסף.';
+                }
+
+                function readGuide() {
+                    if (!currentGuideText || currentGuideText.trim() === '') {
+                        alert('לא הוזן טקסט מדריך לפלפל הזה.');
+                        return;
+                    }
+
+                    window.speechSynthesis.cancel();
+
+                    const speech = new SpeechSynthesisUtterance(currentGuideText);
+
+                    speech.lang = 'he-IL';
+                    speech.rate = 0.9;
+                    speech.pitch = 1;
+
+                    window.speechSynthesis.speak(speech);
+                }
+
+                function stopGuide() {
+                    window.speechSynthesis.cancel();
                 }
 
                 const scanner = new Html5QrcodeScanner(
                     "reader",
-                    { fps: 10, qrbox: { width: 240, height: 240 } },
+                    {
+                        fps: 10,
+                        qrbox: {
+                            width: 240,
+                            height: 240
+                        }
+                    },
                     false
                 );
 
@@ -47,107 +221,245 @@
 </div>
 
 <style>
-.tour-page {
-    min-height: calc(100vh - 76px);
-    padding: 50px 16px;
-    background: #fff7f7;
-}
-
-.tour-card {
-    width: min(620px, 100%);
-    margin: 0 auto;
-    background: white;
-    border-radius: 24px;
-    padding: 32px;
-    box-shadow: 0 16px 40px rgba(0,0,0,0.08);
-}
-
-.tour-card h1 {
-    font-size: 34px;
-    margin-bottom: 14px;
-    color: #171717;
-}
-
-.tour-card p {
-    color: #555;
-    line-height: 1.8;
-    margin-bottom: 24px;
-}
-
-.tour-card label {
-    display: block;
-    font-weight: 800;
-    margin-bottom: 8px;
-}
-
-.tour-card input {
-    width: 100%;
-    padding: 16px;
-    border: 1px solid #ddd;
-    border-radius: 14px;
-    font-size: 20px;
-    text-align: center;
-    direction: ltr;
-    margin-bottom: 18px;
-}
-
-.tour-card button {
-    width: 100%;
-    border: none;
-    background: #d71920;
-    color: white;
-    border-radius: 14px;
-    padding: 15px;
-    font-size: 18px;
-    font-weight: 800;
-}
-
-.error {
-    background: #fff0f0;
-    color: #b9151b;
-    border: 1px solid #ffcaca;
-    padding: 12px;
-    border-radius: 12px;
-    margin-bottom: 18px;
-    font-weight: 700;
-}
-
-.success {
-    background: #f0fff4;
-    color: #166534;
-    border: 1px solid #bbf7d0;
-    padding: 14px;
-    border-radius: 14px;
-    margin-bottom: 22px;
-    font-weight: 800;
-}
-
-#reader {
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-}
-
-#qr-result {
-    margin-top: 20px;
-    background: #fafafa;
-    border-radius: 14px;
-    padding: 16px;
-    line-height: 1.7;
-}
-
-@media (max-width: 560px) {
     .tour-page {
-        padding: 24px 10px;
+        min-height: calc(100vh - 76px);
+        padding: 50px 16px;
+        background: #fff7f7;
     }
 
     .tour-card {
-        padding: 22px;
-        border-radius: 18px;
+        width: min(680px, 100%);
+        margin: 0 auto;
+        background: white;
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
     }
 
     .tour-card h1 {
+        font-size: 34px;
+        margin-bottom: 14px;
+        color: #171717;
+    }
+
+    .tour-card p {
+        color: #555;
+        line-height: 1.8;
+        margin-bottom: 24px;
+    }
+
+    .tour-card label {
+        display: block;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .tour-card input {
+        width: 100%;
+        padding: 16px;
+        border: 1px solid #ddd;
+        border-radius: 14px;
+        font-size: 20px;
+        text-align: center;
+        direction: ltr;
+        margin-bottom: 18px;
+    }
+
+    .tour-card button {
+        border: none;
+        background: #d71920;
+        color: white;
+        border-radius: 14px;
+        padding: 15px;
+        font-size: 18px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .tour-card button:hover {
+        background: #b9151b;
+    }
+
+    form button {
+        width: 100%;
+    }
+
+    .error {
+        background: #fff0f0;
+        color: #b9151b;
+        border: 1px solid #ffcaca;
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 18px;
+        font-weight: 700;
+    }
+
+    .success {
+        background: #f0fff4;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        padding: 14px;
+        border-radius: 14px;
+        margin-bottom: 22px;
+        font-weight: 800;
+    }
+
+    #reader {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+    }
+
+    #qr-result {
+        margin-top: 20px;
+        background: #fafafa;
+        border-radius: 14px;
+        padding: 16px;
+        line-height: 1.7;
+    }
+
+    .loading-message {
+        color: #555;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    .pepper-info-card {
+        margin-top: 8px;
+        background: #ffffff;
+        border: 1px solid #ffe0e0;
+        border-radius: 22px;
+        padding: 24px;
+        text-align: right;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+    }
+
+    .pepper-info-image {
+        width: 100%;
+        height: 260px;
+        object-fit: contain;
+        object-position: center;
+        border-radius: 18px;
+        margin-bottom: 18px;
+        background: #fff;
+    }
+
+    .pepper-info-card h2 {
+        color: #d71920;
+        margin-bottom: 12px;
         font-size: 28px;
     }
-}
+
+    .pepper-meta {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+        font-weight: 800;
+    }
+
+    .pepper-meta span {
+        background: #fff3f3;
+        border: 1px solid #ffd4d4;
+        color: #d71920;
+        padding: 8px 12px;
+        border-radius: 999px;
+    }
+
+    .pepper-description {
+        color: #444;
+        line-height: 1.8;
+    }
+
+    .pepper-section {
+        margin-top: 16px;
+        background: #fafafa;
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .pepper-section strong {
+        color: #171717;
+    }
+
+    .pepper-section p {
+        margin: 8px 0 0;
+    }
+
+    .guide-preview {
+        background: #fff8f0;
+        border: 1px solid #ffe1c2;
+    }
+
+    .pepper-buttons {
+        margin-top: 20px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .guide-audio-btn {
+        width: auto !important;
+        padding: 12px 22px !important;
+        background: #171717 !important;
+        color: white;
+        border-radius: 14px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+    .stop-audio-btn {
+        width: auto !important;
+        padding: 12px 22px !important;
+        background: #6f6f6f !important;
+        color: white;
+        border-radius: 14px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+    .back-to-scan-btn {
+        width: auto !important;
+        padding: 12px 22px !important;
+        display: inline-block;
+    }
+
+    .pepper-error {
+        background: #fff3f3;
+        color: #d71920;
+        border: 1px solid #ffd4d4;
+        padding: 14px;
+        border-radius: 14px;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    @media (max-width: 560px) {
+        .tour-page {
+            padding: 24px 10px;
+        }
+
+        .tour-card {
+            padding: 22px;
+            border-radius: 18px;
+        }
+
+        .tour-card h1 {
+            font-size: 28px;
+        }
+
+        .pepper-info-card {
+            padding: 18px;
+        }
+
+        .pepper-buttons {
+            flex-direction: column;
+        }
+
+        .guide-audio-btn,
+        .stop-audio-btn,
+        .back-to-scan-btn {
+            width: 100% !important;
+        }
+    }
 </style>

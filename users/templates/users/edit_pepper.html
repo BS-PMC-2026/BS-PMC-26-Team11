@@ -1,0 +1,175 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עריכת פלפל</title>
+
+    <style>
+        body{
+            font-family:Arial,sans-serif;
+            background:#fafafa;
+            direction:rtl;
+            margin:0;
+        }
+
+        .container{
+            max-width:900px;
+            margin:40px auto;
+            background:#fff;
+            padding:40px;
+            border-radius:20px;
+            box-shadow:0 8px 20px rgba(0,0,0,.08);
+        }
+
+        h1{
+            margin-bottom:30px;
+        }
+
+        label{
+            display:block;
+            margin-bottom:8px;
+            font-weight:700;
+        }
+
+        input,
+        textarea{
+            width:100%;
+            padding:12px;
+            margin-bottom:20px;
+            border:1px solid #ddd;
+            border-radius:10px;
+            box-sizing:border-box;
+        }
+
+        textarea{
+            min-height:120px;
+        }
+
+        .btn{
+            background:#d71920;
+            color:white;
+            border:none;
+            padding:12px 24px;
+            border-radius:10px;
+            cursor:pointer;
+            font-weight:bold;
+        }
+
+        .btn:hover{
+            background:#b9151b;
+        }
+
+        .back{
+            display:inline-block;
+            margin-bottom:20px;
+            color:#666;
+            text-decoration:none;
+        }
+
+        .success{
+            background:#e8ffe8;
+            border:1px solid #8ed08e;
+            padding:12px;
+            border-radius:10px;
+            margin-bottom:20px;
+        }
+
+        .error{
+            background:#ffe8e8;
+            border:1px solid #e0a0a0;
+            padding:12px;
+            border-radius:10px;
+            margin-bottom:20px;
+        }
+
+        img{
+            max-width:250px;
+            border-radius:12px;
+            margin-bottom:20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <a class="back" href="{% url 'admin_peppers' %}">
+        ← חזרה לניהול פלפלים
+    </a>
+
+    <h1>עריכת פלפל</h1>
+
+    {% if success_message == 'updated' %}
+        <div class="success">
+            הפלפל עודכן בהצלחה.
+        </div>
+    {% endif %}
+
+    {% if error_message %}
+        <div class="error">
+            {{ error_message }}
+        </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <label>שם הפלפל</label>
+        <input type="text"
+               name="name"
+               value="{{ pepper.name }}"
+               required>
+
+        <label>רמת חריפות (1-10)</label>
+        <input type="number"
+               name="spiciness_level"
+               min="1"
+               max="10"
+               value="{{ pepper.spiciness_level }}"
+               required>
+
+        <label>מקור</label>
+        <input type="text"
+               name="origin"
+               value="{{ pepper.origin }}">
+
+        <label>תיאור</label>
+        <textarea name="description" required>{{ pepper.description }}</textarea>
+
+        <label>שימושים</label>
+        <textarea name="usage">{{ pepper.usage }}</textarea>
+
+        <label>עובדה מעניינת</label>
+        <textarea name="fun_fact">{{ pepper.fun_fact }}</textarea>
+<label>טקסט מדריך להקראה</label>
+<textarea name="guide_text"
+          placeholder="כתבי כאן את הטקסט שהמערכת תקריא למבקר אחרי סריקה">{{ pepper.guide_text }}</textarea>
+        {% if pepper.image %}
+            <label>תמונה נוכחית</label>
+            <img src="{{ pepper.image.url }}" alt="{{ pepper.name }}">
+        {% endif %}
+
+        <label>החלפת תמונה</label>
+        <input type="file"
+               name="image"
+               accept="image/*">
+
+        <p>
+            <strong>QR:</strong>
+            {{ pepper.qr_code_value }}
+        </p>
+
+        <br>
+
+        <button type="submit" class="btn">
+            שמור שינויים
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

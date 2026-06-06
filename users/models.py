@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
-
+from io import BytesIO
+import qrcode
+from django.core.files.base import ContentFile
 
 class User(models.Model):
     ROLE_CHOICES = [
@@ -170,3 +172,63 @@ class CartItem(models.Model):
 
     def is_active(self):
         return self.status == 'Reserved' and self.expires_at > timezone.now()
+
+
+
+
+class PepperType(models.Model):
+    class Meta:
+        db_table = 'PepperTypes'
+
+    name = models.CharField(max_length=120, db_column='Name')
+    description = models.TextField(db_column='Description')
+    spiciness_level = models.PositiveSmallIntegerField(default=1, db_column='SpicinessLevel')
+    origin = models.CharField(max_length=120, blank=True, db_column='Origin')
+    usage = models.TextField(blank=True, db_column='Usage')
+    fun_fact = models.TextField(blank=True, db_column='FunFact')
+    image = models.ImageField(upload_to='peppers/', blank=True, null=True, db_column='Image')
+    qr_code_value = models.CharField(max_length=50, unique=True, blank=True, db_column='QRCodeValue')
+    is_active = models.BooleanField(default=True, db_column='IsActive')
+    created_at = models.DateTimeField(auto_now_add=True, db_column='CreatedAt')
+    updated_at = models.DateTimeField(auto_now=True, db_column='UpdatedAt')
+    guide_text = models.TextField(
+    blank=True,
+    default=''
+    )
+    qr_code_image = models.ImageField(
+        upload_to='pepper_qr/',
+        blank=True,
+        null=True,
+        db_column='QRCodeImage'
+    )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        updated_fields = []
+
+        if not self.qr_code_value:
+            self.qr_code_value = f"PEPPER:{self.id}"
+            updated_fields.append('qr_code_value')
+
+        if self.qr_code_value and not self.qr_code_image:
+            qr = qrcode.make(self.qr_code_value)
+
+            buffer = BytesIO()
+            qr.save(buffer, format='PNG')
+
+            file_name = f'pepper_{self.id}_qr.png'
+
+            self.qr_code_image.save(
+                file_name,
+                ContentFile(buffer.getvalue()),
+                save=False
+            )
+
+            updated_fields.append('qr_code_image')
+
+        if updated_fields:
+            super().save(update_fields=updated_fields)
+
+    def __str__(self):
+        return self.name
