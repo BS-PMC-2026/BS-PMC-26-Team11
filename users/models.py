@@ -137,6 +137,12 @@ class CartItem(models.Model):
     ('Expired', 'Expired'),
 ]
 
+    tour_access_code = models.CharField(
+    max_length=6,
+    blank=True,
+    null=True,
+    db_column='TourAccessCode'
+    )
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

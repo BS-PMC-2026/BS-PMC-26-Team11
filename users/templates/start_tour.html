@@ -1,0 +1,153 @@
+{% include 'includes/site_navbar.html' with active_nav='start_tour' %}
+
+<div class="tour-page" dir="rtl">
+    <section class="tour-card">
+        <h1>התחל סיור</h1>
+        <p>
+            הזינו את קוד הגישה שקיבלתם במייל לאחר הרכישה.
+            לאחר האישור תוכלו לסרוק קודי QR בחווה ולקבל מידע על החבילה והאזורים השונים.
+        </p>
+
+        {% if error_message %}
+            <div class="error">{{ error_message }}</div>
+        {% endif %}
+
+        {% if not verified_order %}
+            <form method="post">
+                {% csrf_token %}
+                <label>קוד גישה לסיור</label>
+                <input type="text" name="access_code" inputmode="numeric" placeholder="לדוגמה: 123456" required>
+                <button type="submit">כניסה לסיור</button>
+            </form>
+        {% else %}
+            <div class="success">
+                הכניסה אושרה עבור: <strong>{{ verified_order.package_name }}</strong>
+            </div>
+
+            <div id="reader"></div>
+            <div id="qr-result">סרקו QR כדי לראות מידע נוסף.</div>
+
+            <script src="https://unpkg.com/html5-qrcode"></script>
+            <script>
+                function onScanSuccess(decodedText) {
+                    document.getElementById('qr-result').innerHTML =
+                        '<strong>תוצאה:</strong><br>' + decodedText;
+                }
+
+                const scanner = new Html5QrcodeScanner(
+                    "reader",
+                    { fps: 10, qrbox: { width: 240, height: 240 } },
+                    false
+                );
+
+                scanner.render(onScanSuccess);
+            </script>
+        {% endif %}
+    </section>
+</div>
+
+<style>
+.tour-page {
+    min-height: calc(100vh - 76px);
+    padding: 50px 16px;
+    background: #fff7f7;
+}
+
+.tour-card {
+    width: min(620px, 100%);
+    margin: 0 auto;
+    background: white;
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.08);
+}
+
+.tour-card h1 {
+    font-size: 34px;
+    margin-bottom: 14px;
+    color: #171717;
+}
+
+.tour-card p {
+    color: #555;
+    line-height: 1.8;
+    margin-bottom: 24px;
+}
+
+.tour-card label {
+    display: block;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.tour-card input {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    font-size: 20px;
+    text-align: center;
+    direction: ltr;
+    margin-bottom: 18px;
+}
+
+.tour-card button {
+    width: 100%;
+    border: none;
+    background: #d71920;
+    color: white;
+    border-radius: 14px;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.error {
+    background: #fff0f0;
+    color: #b9151b;
+    border: 1px solid #ffcaca;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    font-weight: 700;
+}
+
+.success {
+    background: #f0fff4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    padding: 14px;
+    border-radius: 14px;
+    margin-bottom: 22px;
+    font-weight: 800;
+}
+
+#reader {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+#qr-result {
+    margin-top: 20px;
+    background: #fafafa;
+    border-radius: 14px;
+    padding: 16px;
+    line-height: 1.7;
+}
+
+@media (max-width: 560px) {
+    .tour-page {
+        padding: 24px 10px;
+    }
+
+    .tour-card {
+        padding: 22px;
+        border-radius: 18px;
+    }
+
+    .tour-card h1 {
+        font-size: 28px;
+    }
+}
+</style>

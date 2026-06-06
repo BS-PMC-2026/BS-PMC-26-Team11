@@ -21,6 +21,7 @@ from users.views import (
     paid_orders_view,
     payment_page,
     complete_payment,
+    start_tour_view,
     delete_package,
 )
 
@@ -50,6 +51,7 @@ urlpatterns = [
     path('payment/complete/', complete_payment, name='complete_payment'),
     path('paid-orders/', paid_orders_view, name='paid_orders'),
     path('signup-success/', signup_success, name='signup_success'),
+    path('start-tour/', start_tour_view, name='start_tour'),
 ]
 
 if settings.DEBUG:

@@ -1,5 +1,6 @@
 from datetime import timedelta
 import re
+import random
 from decimal import Decimal, InvalidOperation
 from django.db import transaction
 from django.views.decorators.cache import never_cache
@@ -825,14 +826,16 @@ def complete_payment(request):
             user=user,
             status='Reserved'
         )
+        paid_items = []
 
         for item in cart_items:
             item.status = 'Paid'
+            item.tour_access_code = str(random.randint(100000, 999999))
             item.save()
-
+            paid_items.append(item)
         # שליחת מייל
         try:
-           send_order_success_email(user)
+           send_order_success_email(user, paid_items)
            messages.success(request, 'התשלום בוצע בהצלחה ונשלח מייל אישור.')
         except Exception as e:
             messages.warning(request, f'התשלום בוצע, אבל שליחת המייל נכשלה: {e}')
@@ -859,4 +862,35 @@ def paid_orders_view(request):
         'full_name': user.full_name,
         'user_role': user.role,
         'is_authenticated': True,
+    })
+
+#דף התחלת הסיור
+
+def start_tour_view(request):
+    user = _get_logged_in_user(request)
+
+    if not user:
+        return redirect('login')
+
+    error_message = None
+    verified_order = None
+
+    if request.method == 'POST':
+        access_code = request.POST.get('access_code', '').strip()
+
+        verified_order = CartItem.objects.filter(
+            user=user,
+            status='Paid',
+            tour_access_code=access_code
+        ).select_related('package').first()
+
+        if not verified_order:
+            error_message = 'קוד הגישה אינו תקין או שלא נמצאה הזמנה ששולמה.'
+
+    return render(request, 'users/start_tour.html', {
+        'full_name': user.full_name,
+        'user_role': user.role,
+        'is_authenticated': True,
+        'error_message': error_message,
+        'verified_order': verified_order,
     })

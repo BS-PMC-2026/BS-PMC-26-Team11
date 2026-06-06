@@ -183,6 +183,12 @@
                    class="{% if active_nav == 'tours' %}is-active{% endif %}">
                     סיורים
                 </a>
+                {% if is_authenticated %}
+                    <a href="{% url 'start_tour' %}"
+                       class="{% if active_nav == 'start_tour' %}is-active{% endif %}">
+                        התחל סיור
+                    </a>
+                {% endif %}
 
                 <a href="{% url 'paid_orders' %}"
                    class="{% if active_nav == 'paid_orders' %}is-active{% endif %}">
