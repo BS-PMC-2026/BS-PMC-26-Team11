@@ -103,6 +103,14 @@ DATABASES = {
         },
     }
 }
+
+if os.getenv("GITHUB_ACTIONS") == "true":
+    DATABASES["default"]["TEST"] = {
+        "MIRROR": "default"
+    }
+
+
+
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
