@@ -164,3 +164,21 @@ class CartItem(models.Model):
 
     def is_active(self):
         return self.status == 'Reserved' and self.expires_at > timezone.now()
+
+
+class Feedback(models.Model):
+    class Meta:
+        db_table = 'FEEDBACKS'
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='feedbacks',
+        db_column='user_id',
+    )
+    content = models.TextField(db_column='content')
+    rating = models.PositiveSmallIntegerField(default=5, db_column='rating')
+    created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
+
+    def __str__(self):
+        return f"{self.user.full_name} - {self.rating}★"

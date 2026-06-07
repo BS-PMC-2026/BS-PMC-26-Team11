@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse, HttpResponseNotAllowed
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from .models import User, Package, CartItem, Discount
+from .models import User, Package, CartItem, Discount, Feedback
 from .cancellation import assert_cancellation_window_open, cancellation_deadline, is_cancellation_window_open
 from .exceptions import TimeExpired
 from .reservations import release_expired_reservations
@@ -859,4 +859,187 @@ def paid_orders_view(request):
         'full_name': user.full_name,
         'user_role': user.role,
         'is_authenticated': True,
+    })
+
+
+def admin_users_list(request):
+    user = _get_logged_in_user(request)
+    if not user or user.role != 'admin':
+        return render(request, 'error.html', {'status_code': 403}, status=403)
+
+    users = User.objects.all().order_by('-id')
+    return render(request, 'users/admin_users_list.html', {
+        'users': users,
+        'full_name': user.full_name,
+        'user_role': user.role,
+    })
+
+
+@csrf_exempt
+def admin_delete_user(request, user_id):
+    user = _get_logged_in_user(request)
+    if not user or user.role != 'admin':
+        return JsonResponse({'error': 'forbidden'}, status=403)
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method_not_allowed'}, status=405)
+
+    try:
+        target_user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'not_found'}, status=404)
+
+    target_user.delete()
+    return JsonResponse({'status': 'deleted'}, status=200)
+
+
+@never_cache
+def admin_feedbacks_page(request):
+    user = _get_logged_in_user(request)
+    if not user or user.role != 'admin':
+        return redirect('home')
+
+    return render(request, 'users/admin_feedbacks.html', {
+        'full_name': user.full_name,
+        'user_role': user.role,
+    })
+
+
+@csrf_exempt
+def admin_feedbacks(request):
+    user = _get_logged_in_user(request)
+    if not user or user.role != 'admin':
+        return JsonResponse({'error': 'forbidden'}, status=403)
+
+    if request.method != 'GET':
+        return HttpResponseNotAllowed(['GET'])
+
+    feedbacks = Feedback.objects.select_related('user').order_by('-created_at')
+
+    if not feedbacks.exists():
+        return JsonResponse({'feedbacks': [], 'message': 'No feedbacks found'}, status=200)
+
+    data = []
+    for feedback in feedbacks:
+        data.append({
+            'id': feedback.id,
+            'name': feedback.user.full_name,
+            'content': feedback.content,
+            'rating': feedback.rating,
+            'created_at': feedback.created_at.isoformat(),
+        })
+
+    return JsonResponse({'feedbacks': data}, status=200)
+
+
+@never_cache
+def feedbacks_page(request):
+    user = _get_logged_in_user(request)
+    return render(request, 'users/feedbacks.html', {
+        'full_name': user.full_name if user else '',
+        'is_authenticated': user is not None,
+    })
+
+
+@csrf_exempt
+def submit_feedback(request):
+    user = _get_logged_in_user(request)
+    if not user:
+        return JsonResponse({'error': 'authentication_required'}, status=401)
+
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    try:
+        import json
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'invalid_json'}, status=400)
+
+    content = data.get('content', '').strip()
+    rating = data.get('rating')
+
+    if not content:
+        return JsonResponse({'error': 'content_required'}, status=400)
+
+    if rating is None:
+        return JsonResponse({'error': 'rating_required'}, status=400)
+
+    try:
+        rating = int(rating)
+        if rating < 1 or rating > 5:
+            raise ValueError
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'invalid_rating'}, status=400)
+
+    feedback = Feedback.objects.create(
+        user=user,
+        content=content,
+        rating=rating
+    )
+
+    return JsonResponse({
+        'id': feedback.id,
+        'name': feedback.user.full_name,
+        'content': feedback.content,
+        'rating': feedback.rating,
+        'created_at': feedback.created_at.isoformat(),
+    }, status=201)
+
+
+@never_cache
+def get_user_feedbacks(request):
+    user = _get_logged_in_user(request)
+    if not user:
+        return JsonResponse({'error': 'authentication_required'}, status=401)
+
+    if request.method != 'GET':
+        return HttpResponseNotAllowed(['GET'])
+
+    feedbacks = Feedback.objects.filter(user=user).order_by('-created_at')
+
+    if not feedbacks.exists():
+        return JsonResponse({'feedbacks': []}, status=200)
+
+    data = []
+    for feedback in feedbacks:
+        data.append({
+            'id': feedback.id,
+            'name': feedback.user.full_name,
+            'content': feedback.content,
+            'rating': feedback.rating,
+            'created_at': feedback.created_at.isoformat(),
+        })
+
+    return JsonResponse({'feedbacks': data}, status=200)
+
+
+def view_all_feedbacks(request):
+    if request.method != 'GET':
+        return HttpResponseNotAllowed(['GET'])
+
+    feedbacks = Feedback.objects.select_related('user').order_by('-created_at')
+
+    if not feedbacks.exists():
+        return JsonResponse({'feedbacks': []}, status=200)
+
+    data = []
+    for feedback in feedbacks:
+        data.append({
+            'id': feedback.id,
+            'name': feedback.user.full_name,
+            'content': feedback.content,
+            'rating': feedback.rating,
+            'created_at': feedback.created_at.isoformat(),
+        })
+
+    return JsonResponse({'feedbacks': data}, status=200)
+
+
+@never_cache
+def all_feedbacks_page(request):
+    user = _get_logged_in_user(request)
+    return render(request, 'users/all_feedbacks.html', {
+        'full_name': user.full_name if user else '',
+        'is_authenticated': user is not None,
     })
