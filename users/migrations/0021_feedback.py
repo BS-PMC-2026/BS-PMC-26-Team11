@@ -7,8 +7,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0020_cartitem_quantity'),
-    ]
+              ('users', '0020_peppertype_alter_cartitem_tour_access_code'),
+]
+    
 
     operations = [
         migrations.CreateModel(
