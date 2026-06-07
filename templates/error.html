@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שגיאה</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            color: #333;
+        }
+        .error-container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+        }
+        .error-code {
+            font-size: 72px;
+            font-weight: bold;
+            color: #dc3545;
+            margin: 0;
+        }
+        .error-message {
+            font-size: 20px;
+            color: #666;
+            margin: 15px 0;
+        }
+        .error-description {
+            font-size: 14px;
+            color: #999;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: opacity 0.3s;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <p class="error-code">{{ status_code }}</p>
+
+        {% if status_code == 403 %}
+            <p class="error-message">גישה נדחתה</p>
+            <p class="error-description">
+                אין לך הרשאה לגשת לעמוד זה.
+                <br>
+                רק מנהלי המערכת יכולים לגשת לחלק זה.
+            </p>
+        {% elif status_code == 404 %}
+            <p class="error-message">העמוד לא נמצא</p>
+            <p class="error-description">
+                העמוד שחיפשת לא קיים.
+            </p>
+        {% elif status_code == 500 %}
+            <p class="error-message">שגיאת שרת</p>
+            <p class="error-description">
+                אירעה שגיאה בשרת. אנא נסה שוב מאוחר יותר.
+            </p>
+        {% else %}
+            <p class="error-message">שגיאה</p>
+            <p class="error-description">
+                אירעתה שגיאה בעת עיבוד הבקשה שלך.
+            </p>
+        {% endif %}
+
+        <a href="/" class="btn">חזור לעמוד הבית</a>
+    </div>
+</body>
+</html>
