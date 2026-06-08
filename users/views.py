@@ -272,11 +272,20 @@ def package_list(request):
         cart_items = CartItem.objects.filter(user=user).select_related('package')
         cart_package_ids = [item.package.id for item in cart_items if item.package]
 
+    
     suggested_packages = Package.objects.filter(
         is_available=True
     ).exclude(
         id__in=cart_package_ids
     ).order_by('?')[:3]
+
+    for package in suggested_packages:
+        package.active_discount = package.has_active_discount()
+        package.discounted_price = package.get_discounted_price()
+
+
+
+
 
     return render(request, 'users/packages.html', {
         'packages': packages,
@@ -936,6 +945,7 @@ def delete_package(request, package_id):
 
 def payment_page(request):
     user = _get_logged_in_user(request)
+    cart_context = _build_cart_context(user)
 
     if not user:
         return redirect('home')
@@ -945,13 +955,24 @@ def payment_page(request):
         status='Reserved'
     ).select_related('package')
 
-    total_price = sum(item.package.price for item in cart_items)
+    total_price = Decimal('0.00')
+
+    for item in cart_items:
+        item.final_price = item.package.get_discounted_price() or item.package.price
+        total_price += item.final_price
+
 
     return render(request, 'users/payment.html', {
-        'cart_items': cart_items,
+        
+        'payment_items': cart_items,
         'full_name': user.full_name,
+        'user_role': user.role,
+        'is_authenticated': True,
         'total_price': total_price,
+        **cart_context,
     })
+
+
 
 
 
@@ -1034,7 +1055,7 @@ def complete_payment(request):
 #דף מציג ההזמנות ששולמו
 def paid_orders_view(request):
     user = _get_logged_in_user(request)
-
+    cart_context = _build_cart_context(user)
     if not user:
         return redirect('home')
 
@@ -1046,8 +1067,9 @@ def paid_orders_view(request):
     return render(request, 'users/paid_orders.html', {
         'paid_orders': paid_orders,
         'full_name': user.full_name,
-        'user_role': user.role,
         'is_authenticated': True,
+        'user_role': user.role,
+        **cart_context,
     })
 
 #דף התחלת הסיור
@@ -1057,6 +1079,8 @@ def start_tour_view(request):
 
     if not user:
         return redirect('login')
+
+    cart_context = _build_cart_context(user)
 
     error_message = None
     verified_order = None
@@ -1079,6 +1103,7 @@ def start_tour_view(request):
         'is_authenticated': True,
         'error_message': error_message,
         'verified_order': verified_order,
+        **cart_context,
     })
 
 
@@ -1335,13 +1360,15 @@ def view_all_feedbacks(request):
 @never_cache
 def all_feedbacks_page(request):
     user = _get_logged_in_user(request)
-
+    cart_context = _build_cart_context(user)
     return render(request, 'users/all_feedbacks.html', {
         'full_name': user.full_name if user else '',
         'user_role': user.role if user else 'guest',
         'is_authenticated': user is not None,
         'can_submit_feedback': user_has_paid_order(user),
         'active_nav': 'all_feedbacks',
+        **cart_context,
+        
     })
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse

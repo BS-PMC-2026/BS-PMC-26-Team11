@@ -99,7 +99,7 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT', '1433'),
 
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
+            'driver': 'ODBC Driver 18 for SQL Server',
             'extra_params': 'Encrypt=yes;TrustServerCertificate=yes',
         },
     }
@@ -139,7 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Jerusalem'
 
 USE_I18N = True
 

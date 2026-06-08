@@ -6,11 +6,21 @@
     <div class="payment-card">
         <h2>סיכום הזמנה</h2>
 
-        {% for item in cart_items %}
+        {% for item in payment_items %}
             <div class="payment-row">
                 <span>{{ item.package_name }}</span>
-                <strong>₪{{ item.package.price }}</strong>
-            </div>
+<strong>
+    {% if item.package.has_active_discount %}
+        <span style="text-decoration: line-through; color:#999; font-size:14px;">
+            ₪{{ item.package.price|floatformat:2 }}
+        </span>
+        <span style="color:#d71920; font-weight:900;">
+            ₪{{ item.final_price|floatformat:2 }}
+        </span>
+    {% else %}
+        ₪{{ item.final_price|floatformat:2 }}
+    {% endif %}
+</strong>            </div>
         {% endfor %}
 
         <div class="payment-total">

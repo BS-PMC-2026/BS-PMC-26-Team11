@@ -56,8 +56,13 @@ class Package(models.Model):
 
     def active_reservations(self):
         now = timezone.now()
-        return self.cart_items.filter(status='Reserved', expires_at__gt=now).count()
 
+        return self.cart_items.filter(
+            models.Q(status='Reserved', expires_at__gt=now) |
+            models.Q(status='Paid')
+        ).count()
+    
+    
     def available_capacity(self):
         return max(self.capacity - self.active_reservations(), 0)
 
@@ -236,7 +241,7 @@ class PepperType(models.Model):
         return self.name
     
 
-    
+
 class Feedback(models.Model):
     class Meta:
         db_table = 'FEEDBACKS'
