@@ -349,10 +349,11 @@
             {% for package in packages %}
                 <article class="product-card">
                     <div class="product-image">
-                        {% if package.image_url %}
+                        {% if package.image %}
+                            <img src="{{ package.image.url }}" alt="{{ package.name }}">
+                        {% elif package.image_url %}
                             <img src="{{ package.image_url }}" alt="{{ package.name }}">
-                        {% else %}
-                            <img src="{% static 'images/red-peppers.png' %}" alt="{{ package.name }}">
+                       
                         {% endif %}
                     </div>
                     <div class="product-body">

@@ -480,17 +480,20 @@ def admin_packages(request):
                 if cancellation_value < 1:
                     error_message = 'זמן הביטול חייב להיות לפחות שעה אחת.'
                 else:
-                    Package.objects.create(
-                        name=name,
-                        description=description,
-                        price=price_value,
-                        package_type=package_type,
-                        farm_area=farm_area,
-                        image=image,
-                        capacity=capacity_value,
-                        tour_datetime=tour_datetime,
-                        cancellation_hours=cancellation_value,
-                    )
+                    create_kwargs = {
+                        'name': name,
+                        'description': description,
+                        'price': price_value,
+                        'package_type': package_type,
+                        'farm_area': farm_area,
+                        'capacity': capacity_value,
+                        'tour_datetime': tour_datetime,
+                        'cancellation_hours': cancellation_value,
+                    }
+                    if image:
+                        create_kwargs['image'] = image
+
+                    Package.objects.create(**create_kwargs)
 
                     return redirect(f"{reverse('admin_packages_view')}?success=added")
 

@@ -280,7 +280,9 @@
         {% for cart_item in cart_items %}
             <div class="drawer-item drawer-cart-item" id="drawer-cart-item-{{ cart_item.item.id }}">
     <div class="drawer-item-image">
-        {% if cart_item.item.package.image_url %}
+        {% if cart_item.item.package.image %}
+            <img src="{{ cart_item.item.package.image.url }}" alt="{{ cart_item.item.package_name }}">
+        {% elif cart_item.item.package.image_url %}
             <img src="{{ cart_item.item.package.image_url }}" alt="{{ cart_item.item.package_name }}">
         {% else %}
             <img src="{% static 'images/red-peppers.png' %}" alt="{{ cart_item.item.package_name }}">

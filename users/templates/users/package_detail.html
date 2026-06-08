@@ -56,7 +56,9 @@
 
     <div class="content">
         <div class="detail-card">
-            {% if package.image_url %}
+            {% if package.image %}
+                <img src="{{ package.image.url }}" alt="{{ package.name }}">
+            {% elif package.image_url %}
                 <img src="{{ package.image_url }}" alt="{{ package.name }}">
             {% endif %}
             <div class="detail-body">
