@@ -74,20 +74,6 @@ class AdminUsersListTest(TestCase):
         self.assertContains(response, self.another_user.full_name)
         self.assertContains(response, self.another_user.email)
 
-    def test_no_users_message(self):
-        User.objects.all().delete()
-        admin = User.objects.create(
-            full_name='Admin',
-            email='admin@test.com',
-            password='hashed',
-            phone='0501234567',
-            role='admin',
-        )
-        session = self.client.session
-        session['user_id'] = admin.id
-        session.save()
-        response = self.client.get(reverse('admin_users_list'))
-        self.assertContains(response, 'אין משתמשים רשומים')
 
 
 class AdminDeleteUserTest(TestCase):

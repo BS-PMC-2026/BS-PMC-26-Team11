@@ -234,6 +234,9 @@ class PepperType(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+    
 class Feedback(models.Model):
     class Meta:
         db_table = 'FEEDBACKS'
