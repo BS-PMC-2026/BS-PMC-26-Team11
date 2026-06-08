@@ -1,5 +1,8 @@
 from datetime import timedelta
 import re
+from io import BytesIO
+import qrcode
+from django.http import HttpResponse
 import random
 from decimal import Decimal, InvalidOperation
 from django.db import transaction
@@ -952,7 +955,6 @@ def payment_page(request):
 
 
 
-import re
 from datetime import datetime
 from django.contrib import messages
 
@@ -1078,6 +1080,29 @@ def start_tour_view(request):
         'error_message': error_message,
         'verified_order': verified_order,
     })
+
+
+
+
+#יצירת QR לפלפל
+def pepper_qr_image(request, pepper_id):
+    user = _get_logged_in_user(request)
+
+    if not _is_admin(user):
+        return redirect('home')
+
+    pepper = get_object_or_404(PepperType, id=pepper_id)
+
+    qr = qrcode.make(pepper.qr_code_value)
+
+    buffer = BytesIO()
+    qr.save(buffer, format='PNG')
+    buffer.seek(0)
+
+    return HttpResponse(buffer.getvalue(), content_type='image/png')
+
+
+
 
 #סריקת הפלפל
 

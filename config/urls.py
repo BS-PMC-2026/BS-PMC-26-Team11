@@ -38,6 +38,7 @@ from users.views import (
     view_all_feedbacks,
     all_feedbacks_page,
     increase_cart_item,
+    pepper_qr_image,
     decrease_cart_item,
 )
 
@@ -84,7 +85,7 @@ urlpatterns = [
     path('dashboard/peppers/', admin_peppers, name='admin_peppers'),
     path('dashboard/peppers/<int:pepper_id>/delete/', delete_pepper, name='delete_pepper'),
     path('dashboard/peppers/<int:pepper_id>/edit/', edit_pepper, name='edit_pepper'),
-
+    path('dashboard/peppers/<int:pepper_id>/qr/', pepper_qr_image, name='pepper_qr_image'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

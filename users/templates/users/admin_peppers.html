@@ -481,7 +481,7 @@
 
                        <td>
     {% if pepper.qr_code_image %}
-        <a href="{{ pepper.qr_code_image.url }}"
+        <a href="{% url 'pepper_qr_image' pepper.id %}"
            target="_blank"
            class="action-btn">
             📱 הצגה
