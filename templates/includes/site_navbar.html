@@ -195,16 +195,16 @@
                     ההזמנות שלי
                 </a>
 
-                <a href="{% url 'home' %}#gallery"
-                   class="{% if active_nav == 'gallery' %}is-active{% endif %}">
-                    גלריה
+               <a href="{% url 'all_feedbacks_page' %}"
+                    class="{% if active_nav == 'all_feedbacks' %}is-active{% endif %}">
+                       משובים
                 </a>
 
-                <a href="{% url 'home' %}#about"
-                   class="{% if active_nav == 'about' %}is-active{% endif %}">
-                    אודות
-                </a>
-
+                <a href="https://www.hadinarim.co.il/%D7%97%D7%A0%D7%95%D7%AA"
+                     target="_blank"
+                     rel="noopener noreferrer">
+                     פלפלים
+                  </a>
             {% endif %}
         </nav>
 
@@ -254,3 +254,4 @@
         </div>
     </div>
 </header>
+{% include 'includes/cart_drawer.html' %}

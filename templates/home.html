@@ -598,6 +598,11 @@
                 padding: 30px 22px 26px;
             }
         }
+        .disabled-cta {
+        opacity: 0.6;
+        cursor: not-allowed;
+        pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -687,11 +692,11 @@
                 <h2>מוכנים להתחיל את המסע החריף שלכם?</h2>
                 <p>הצטרפו לאלפי חובבי חריפים ותתחילו לחקור את העולם המרתק של הטעמים החריפים</p>
                 <div class="cta-buttons">
-                    {% if user_role == 'admin' %}
-                        <span class="cta-button" style="opacity: 0.6; cursor: not-allowed;">הירשמו עכשיו</span>
-                    {% else %}
-                        <a href="{% url 'signup' %}" class="cta-button">הירשמו עכשיו</a>
-                    {% endif %}
+                        {% if user %}
+                          <span class="cta-button disabled-cta">הירשמו עכשיו</span>
+                        {% else %}
+                            <a href="{% url 'signup' %}" class="cta-button">הירשמו עכשיו</a>
+                        {% endif %}
                     <a href="{% url 'packages' %}" class="cta-button">לחצו לקטלוג המלא</a>
                 </div>
             </div>

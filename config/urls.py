@@ -27,7 +27,7 @@ from users.views import (
     delete_pepper,
     admin_peppers,
     edit_pepper,
-
+    remove_cart_item,
     admin_users_list,
     admin_delete_user,
     admin_feedbacks,
@@ -37,12 +37,17 @@ from users.views import (
     get_user_feedbacks,
     view_all_feedbacks,
     all_feedbacks_page,
+    increase_cart_item,
+    decrease_cart_item,
 )
 
 def signup_success(request):
     return render(request, 'signup_success.html')
 
 urlpatterns = [
+    path('cart/item/<int:item_id>/increase/', increase_cart_item, name='increase_cart_item'),
+    path('cart/item/<int:item_id>/decrease/', decrease_cart_item, name='decrease_cart_item'),
+    path('cart/item/<int:item_id>/remove/', remove_cart_item, name='remove_cart_item'),
     path('', home_page, name='home'),
     path('home/', home_page, name='home_page'),
     path('packages/', package_list, name='packages'),

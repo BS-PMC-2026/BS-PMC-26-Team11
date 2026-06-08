@@ -151,6 +151,7 @@ class CartItem(models.Model):
         related_name='cart_items',
         db_column='UserId',
     )
+    quantity = models.PositiveIntegerField(default=1)
     package = models.ForeignKey(
         Package,
         on_delete=models.CASCADE,

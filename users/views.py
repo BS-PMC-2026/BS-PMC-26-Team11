@@ -219,38 +219,65 @@ def _build_cart_context(user):
 
     release_expired_reservations()
     now = timezone.now()
+
     active_items = CartItem.objects.filter(
         user=user,
         status='Reserved',
-        expires_at__gt=now,
+        expires_at__gt=now
     ).select_related('package')
+
     cart_items = []
     total = 0
+    cart_count = 0
+
     for item in active_items:
-        price = item.package.get_discounted_price() or item.package.price
-        total += price
+        quantity = getattr(item, 'quantity', 1)
+
+        unit_price = item.package.get_discounted_price() or item.package.price
+        item_total = unit_price * quantity
+
+        total += item_total
+        cart_count += quantity
+
         cart_items.append({
             'item': item,
-            'price': price,
-            'quantity': 1,
+            'price': item_total,
+            'unit_price': unit_price,
+            'quantity': quantity,
         })
+
     return {
         'cart_items': cart_items,
-        'cart_count': len(cart_items),
+        'cart_count': cart_count,
         'cart_total': total,
     }
 
-
 def package_list(request):
     user = _get_logged_in_user(request)
+
     packages = Package.objects.all().order_by('id')
+
     success_message = request.GET.get('success')
     error_message = request.GET.get('error')
     reserved_minutes = request.GET.get('minutes')
+
     cart_context = _build_cart_context(user)
+
+    cart_package_ids = []
+
+    if user:
+        cart_items = CartItem.objects.filter(user=user).select_related('package')
+        cart_package_ids = [item.package.id for item in cart_items if item.package]
+
+    suggested_packages = Package.objects.filter(
+        is_available=True
+    ).exclude(
+        id__in=cart_package_ids
+    ).order_by('?')[:3]
 
     return render(request, 'users/packages.html', {
         'packages': packages,
+        'suggested_packages': suggested_packages,
         'full_name': user.full_name if user else '',
         'user_role': user.role if user else 'guest',
         'is_authenticated': user is not None,
@@ -1127,6 +1154,14 @@ def admin_feedbacks_page(request):
         'user_role': user.role,
     })
 
+def user_has_paid_order(user):
+    if not user:
+        return False
+
+    return CartItem.objects.filter(
+        user=user,
+        status='Paid'
+    ).exists()
 
 @csrf_exempt
 def admin_feedbacks(request):
@@ -1155,20 +1190,31 @@ def admin_feedbacks(request):
     return JsonResponse({'feedbacks': data}, status=200)
 
 
+
 @never_cache
 def feedbacks_page(request):
     user = _get_logged_in_user(request)
+
     return render(request, 'users/feedbacks.html', {
         'full_name': user.full_name if user else '',
         'is_authenticated': user is not None,
+        'user_role': user.role if user else 'guest',
+        'can_submit_feedback': user_has_paid_order(user),
+        'active_nav': 'all_feedbacks',
     })
-
 
 @csrf_exempt
 def submit_feedback(request):
     user = _get_logged_in_user(request)
+
     if not user:
         return JsonResponse({'error': 'authentication_required'}, status=401)
+
+    if not user_has_paid_order(user):
+        return JsonResponse({
+            'error': 'purchase_required',
+            'message': 'רק משתמש שרכש חבילה יכול להוסיף משוב.'
+        }, status=403)
 
     if request.method != 'POST':
         return HttpResponseNotAllowed(['POST'])
@@ -1208,7 +1254,6 @@ def submit_feedback(request):
         'rating': feedback.rating,
         'created_at': feedback.created_at.isoformat(),
     }, status=201)
-
 
 @never_cache
 def get_user_feedbacks(request):
@@ -1262,7 +1307,131 @@ def view_all_feedbacks(request):
 @never_cache
 def all_feedbacks_page(request):
     user = _get_logged_in_user(request)
+
     return render(request, 'users/all_feedbacks.html', {
         'full_name': user.full_name if user else '',
+        'user_role': user.role if user else 'guest',
         'is_authenticated': user is not None,
+        'can_submit_feedback': user_has_paid_order(user),
+        'active_nav': 'all_feedbacks',
+    })
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
+
+
+@require_http_methods(["DELETE"])
+def remove_cart_item(request, item_id):
+    user = _get_logged_in_user(request)
+
+    if not user:
+        return JsonResponse({'error': 'authentication_required'}, status=401)
+
+    try:
+        cart_item = CartItem.objects.get(id=item_id, user=user)
+    except CartItem.DoesNotExist:
+        return JsonResponse({'error': 'cart_item_not_found'}, status=404)
+
+    cart_item.delete()
+
+    cart_context = _build_cart_context(user)
+
+    return JsonResponse({
+        'status': 'deleted',
+        'cart_total': cart_context.get('cart_total', 0),
+        'cart_count': cart_context.get('cart_count', 0),
+    }, status=200)
+
+
+
+
+from decimal import Decimal
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+
+
+def _get_cart_item_unit_price(cart_item):
+    package = cart_item.package
+
+    has_discount = False
+
+    if hasattr(package, 'has_active_discount'):
+        if callable(package.has_active_discount):
+            has_discount = package.has_active_discount()
+        else:
+            has_discount = package.has_active_discount
+
+    if has_discount and hasattr(package, 'get_discounted_price'):
+        return Decimal(str(package.get_discounted_price()))
+
+    return Decimal(str(package.price))
+
+@require_http_methods(["POST"])
+def increase_cart_item(request, item_id):
+    user = _get_logged_in_user(request)
+
+    if not user:
+        return JsonResponse({'error': 'authentication_required'}, status=401)
+
+    try:
+        cart_item = CartItem.objects.select_related('package').get(id=item_id, user=user)
+    except CartItem.DoesNotExist:
+        return JsonResponse({'error': 'cart_item_not_found'}, status=404)
+
+    cart_item.quantity += 1
+    cart_item.save()
+
+    unit_price = _get_cart_item_unit_price(cart_item)
+    item_total = unit_price * cart_item.quantity
+
+    cart_context = _build_cart_context(user)
+
+    return JsonResponse({
+        'status': 'updated',
+        'item_id': cart_item.id,
+        'quantity': cart_item.quantity,
+        'item_total': float(item_total),
+        'cart_total': cart_context.get('cart_total', 0),
+        'cart_count': cart_context.get('cart_count', 0),
+    })
+
+
+@require_http_methods(["POST"])
+def decrease_cart_item(request, item_id):
+    user = _get_logged_in_user(request)
+
+    if not user:
+        return JsonResponse({'error': 'authentication_required'}, status=401)
+
+    try:
+        cart_item = CartItem.objects.select_related('package').get(id=item_id, user=user)
+    except CartItem.DoesNotExist:
+        return JsonResponse({'error': 'cart_item_not_found'}, status=404)
+
+    if cart_item.quantity <= 1:
+        cart_item.delete()
+
+        cart_context = _build_cart_context(user)
+
+        return JsonResponse({
+            'status': 'deleted',
+            'item_id': item_id,
+            'cart_total': cart_context.get('cart_total', 0),
+            'cart_count': cart_context.get('cart_count', 0),
+        })
+
+    cart_item.quantity -= 1
+    cart_item.save()
+
+    unit_price = _get_cart_item_unit_price(cart_item)
+    item_total = unit_price * cart_item.quantity
+
+    cart_context = _build_cart_context(user)
+
+    return JsonResponse({
+        'status': 'updated',
+        'item_id': cart_item.id,
+        'quantity': cart_item.quantity,
+        'item_total': float(item_total),
+        'cart_total': cart_context.get('cart_total', 0),
+        'cart_count': cart_context.get('cart_count', 0),
     })

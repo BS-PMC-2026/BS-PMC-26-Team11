@@ -355,6 +355,10 @@
         #table-view {
             display: none;
         }
+        .disabled-feedback-btn {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
 
         @media (max-width: 1150px) {
             .navbar-nav { display: none !important; }
@@ -377,41 +381,27 @@
     </style>
 </head>
 <body>
-<nav class="navbar">
-    <div class="navbar-inner">
-        <a href="{% url 'home' %}" class="navbar-brand">
-            <span>הדינרים</span>
-            <svg class="navbar-brand-flame" viewBox="0 0 64 64" aria-hidden="true">
-                <path d="M36.8 5.5C39.8 17 55 21.8 55 39.2C55 51.7 44.8 60 32.1 60C19.3 60 9 51.8 9 39.1C9 28.5 15.1 21.2 22.4 14.4C21.7 23.2 27 27.2 31.2 28.9C30.2 18.9 33.1 10.8 36.8 5.5Z"
-                      fill="none" stroke="#d71920" stroke-width="6"
-                      stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </a>
+   {% include 'includes/site_navbar.html' with active_nav='all_feedbacks' %}
 
-        <div class="navbar-nav">
-            <a href="{% url 'home' %}">דף הבית</a>
-            <a href="{% url 'packages' %}">חבילות</a>
-            <a href="{% url 'all_feedbacks_page' %}" style="font-weight: 900; color: var(--red);">משובים</a>
-        </div>
-
-        <div class="navbar-actions">
-            {% if is_authenticated %}
-                <span class="user-name">{{ full_name }}</span>
-                <a href="{% url 'logout' %}" class="logout-btn">התנתקות</a>
-            {% else %}
-                <a href="{% url 'login' %}" class="logout-btn">התחברות</a>
-            {% endif %}
-        </div>
-    </div>
-</nav>
 
 <div class="container">
     <div class="header">
         <h1>משובי הביקור בחוות החריף</h1>
         <p>קרא את חוויות המשתמשים שלנו</p>
         {% if is_authenticated %}
-            <a href="{% url 'feedbacks_page' %}" class="add-feedback-button">הוסף משוב שלך</a>
-        {% endif %}
+{% if is_authenticated and can_submit_feedback %}
+    <a href="{% url 'feedbacks_page' %}" class="add-feedback-button">
+        הוסף משוב משלך
+    </a>
+{% elif is_authenticated %}
+    <button type="button" class="add-feedback-button disabled-feedback-btn" disabled>
+        ניתן להוסיף משוב רק לאחר רכישת חבילה
+    </button>
+{% else %}
+    <a href="{% url 'login' %}" class="add-feedback-button">
+        התחבר כדי להוסיף משוב
+    </a>
+{% endif %}        {% endif %}
     </div>
 
     <div class="feedbacks-section">
